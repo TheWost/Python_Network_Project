@@ -1,0 +1,17 @@
+Chat conversation with threading
+- Connect two hosts 
+	socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	server.bind((ADRESS,PORT))
+	server.listen
+	server.accept()
+- make a threat that will have
+	wait for msg from other person (client_socket.recv(1024))
+	if client_socket.recv will return a msg decode it and print it
+- make loop inside main threat
+	Get user input
+	If user input is given sent i (client-socket.send(msg.encode())
+
+
+
+
+	

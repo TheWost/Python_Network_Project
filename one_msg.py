@@ -1,5 +1,5 @@
 import socket
-
+import sys
 # IPV4 and TCP/UDP protocol
 # IPV4 = socket.AF_INET
 # TCP = socket.SOCK_STREAM
@@ -31,3 +31,5 @@ print(f"Connection sucesfull! {client_adress} has connected!")
 data = client_socket.recv(1024) # 1024 means up to 1024 bytes
 
 print(data.decode())
+
+client_socket.send(sys.argv[1].encode())
