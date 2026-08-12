@@ -3,7 +3,7 @@ import socket
 # IPV4 and TCP/UDP protocol
 # IPV4 = socket.AF_INET
 # TCP = socket.SOCK_STREAM
-server = socket.socket(socket.AF_INET, SOCK_STREAM)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # 5000 - port they will send on
 # "0.0.0.0" - everyone from same WIFI who will send on 5000 port
@@ -14,7 +14,7 @@ PORT = 5000
 server.bind((ADRES,PORT))
 
 # lisiterns for another device
-server.lisiten()
+server.listen()
 
 
 #TODO make a animation out of this -> "\, -, /, | "
