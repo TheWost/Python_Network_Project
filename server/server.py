@@ -1,16 +1,26 @@
 import threading, socket
 
 
+class Client:
+    def __init__(self,socket,address, server):
+        self.socket = socket
+        self.address = address
+        self.thread = None
+        self.server = server
+    
+    def recive_msg(self):
+        bytes = 1024
 
-
+        while True:
+            data = self.socket.recv(bytes).decode()
+            self.server.send_to_all_clients(self.address,data)
 
 class Server:
     """Class creates a socket that local machines can connect to and send msgs to"""
     def __init__(self, port=5000, host="0.0.0.0"):
         self.PORT = port # Holds to which PORT socket will be connected to
         self.HOST = host # Holds...
-        self.clients = dict() # Holds key:client_adress value:client_socket
-        self.threads = dict() # Holds key:client_adress value:thread
+        self.clients = dict() # Holds key:client_address value:client_socket
 
 
     def create_server(self,IPV=socket.AF_INET, PROTOCOL=socket.SOCK_STREAM):
@@ -20,20 +30,13 @@ class Server:
     
     def accept_connection(self):
         self.server.listen()
-        socket, adress = self.server.accept() 
-        return socket, adress
+        return Client(*self.server.accept(),self)
+        
     
-    def handle_client(self,adress,socket):
-        bytes = 1024 
-
-        while True:
-            data = socket.recv(bytes).decode()
-            self.send_to_all_clients(adress,data)
-
-    
-    def send_to_all_clients(self,adress,data):
+    def send_to_all_clients(self,address,data):
         for client in self.clients.values():
-            client.send(f"({adress}) -> {data}")
+            client.socket.send(f"({address}) -> {data}".encode())
+
 
             
 
@@ -42,17 +45,15 @@ class Server:
         
         while True:
 
-            socket, adress = self.accept_connection() # Adress returns tuple (IP,PORT)
+            client = self.accept_connection() # Adress returns tuple (IP,PORT)
             
-            t = threading.Thread(
-                    target=self.handle_client,
-                    args=(adress,socket),
-                    name=f"Thread{adress[0]}:{adress[1]}")
+            client.thread = threading.Thread(
+                    target=client.recive_msg,
+                    name=f"Thread{client.address[0]}:{client.address[1]}")
 
-            clients[adress] = socket
-            thread[adress] = t
+            self.clients[client.address] = client
             
-            t.daemon()
-            t.start = True
+            client.thread.daemon = True
+            client.thread.start()
 
 
