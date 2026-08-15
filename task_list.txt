@@ -13,5 +13,12 @@ Chat conversation with threading
 
 
 
+Actual architecture
+- server.py It will be main point where people will be sending their msg and reciving them back.
+	server.py will accept connection from another machine and create a special thread for them that will recive msg that will be instatly sent to everyone that is connected to that server
+So server.py needs
+	accept program
+	msg handler making program
 
-	
+	msg handler needs
+		recive msg and send it to main server and from main server it will get sent everywhere. Or already send it everwhere in handler
