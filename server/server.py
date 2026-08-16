@@ -14,7 +14,7 @@
 
 
 
-import threading, socket
+import threading, socket, json
 
 class Client:
     """ARGS:
@@ -37,8 +37,8 @@ class Client:
     def recive_msg(self):
 
         bytes = 1024
-        while True:
-            try: 
+        try: 
+            while True:
                 raw_data = self.socket.recv(bytes)
                 
                 if not raw_data:
@@ -47,16 +47,16 @@ class Client:
                 data = raw_data.decode()
                 self.server.send_to_all_clients(self.address,data)
 
-            except (ConnectionResetError, BrokenPipeError, socket.error):
-                break
-
-        self.cleanup() 
+        except (ConnectionResetError, BrokenPipeError, socket.error):
+            print(f"{self.address[0]} got discconected!")
+        finally:
+            self.cleanup() 
 
 
 
 class Server:
     """Class creates a socket that local machines can connect to and send msgs to"""
-    def __init__(self, port=5000, host="0.0.0.0"):
+    def __init__(self,host="0.0.0.0", port=8000):
         self.PORT = port # Holds to which PORT socket will be connected to
         self.HOST = host # Holds...
         self.clients = dict() # Holds key:client_address value:client_socket
@@ -67,13 +67,30 @@ class Server:
         self.server.bind((self.HOST, self.PORT))
     
     def accept_connection(self):
-        self.server.listen()
-        return Client(*self.server.accept(),self)
+        try:
+
+            self.server.listen()
+            print("Lisiting...")
+
+            client = Client(*self.server.accept(),self)
+
+            print(f"{client.address[0]} has connected!")
+            
+            return client
+            
+
+
+
+        except KeyboardInterrupt:
+            for client in self.clients.values():
+                client.cleanup()
+            self.server.close()
         
     
     def send_to_all_clients(self,address,data):
+        print(f"({address}) -> {data}")
         for client in self.clients.values():
-            client.socket.send(f"({address}) -> {data}".encode())
+            client.socket.sendall(f"({address}) -> {data}".encode())
 
 
     def connection_loop(self):
@@ -94,7 +111,11 @@ class Server:
 
 
 def main():
-    Server().connection_loop()
+    with open("server_config.json") as f:
+        server_config = json.load(f)["server"]
+
+    Server(**server_config).connection_loop()
+
 
 
 if __name__ == "__main__":
