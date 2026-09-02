@@ -12,15 +12,20 @@ Very very simple, multi device TCP socket application built in Python for real-t
 ## Configuration
 
 **Server Host** `0.0.0.0`
-**Client Host** `127.0.0.1`
 **Port** `5000`
 
 
 
 ## How to run
 
-### Option 1: testing on the same computer (two terminals)
-1. **Start the Server**:
-python3 server.py
-2. On other terminal **start the client**:
-python3 client.py
+### If you are server
+1. Set configuration in server_config to your liking inside server object.
+    - `0.0.0.0` so everyone can connect
+    - `127.0.0.1` so everyone from your computer can connect
+
+2. Run server.py on machine on one terminal (This terminal won't be usable while server is running)
+
+### If you are client
+1. Inside your server_config.json put in client host: "Your server IPV4"
+2. On any local machine run client.py
+3. Done! you are connected to that server

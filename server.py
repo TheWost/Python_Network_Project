@@ -14,7 +14,9 @@
 
 
 
-import threading, socket, json
+import threading
+import socket
+import json
 
 class Client:
     """ARGS:
@@ -23,50 +25,53 @@ class Client:
         server: Server
 
         Holds values esseintal for client to recive and send packets."""
-    def __init__(self,socket,address, server):
-        self.socket = socket
+    def __init__(self,client_socket,address, server):
+        self.client_socket = client_socket
         self.address = address
         self.thread = None
         self.server = server
-    
+ 
     def cleanup(self):
-        del self.server.clients[self.address] 
-        self.socket.close()
+        """Removes itself from everywhere and deletes itself"""
+        del self.server.clients[self.address]
+        self.client_socket.close()
         del self
 
     def recive_msg(self):
-
+        """Lisitens for msg from it's connected socket"""
         bytes = 1024
-        try: 
+        try:
             while True:
-                raw_data = self.socket.recv(bytes)
-                
+                raw_data = self.client_socket.recv(bytes)
+
                 if not raw_data:
-                    break                   
-                
+                    break                 
+
                 data = raw_data.decode()
                 self.server.send_to_all_clients(self.address,data)
 
         except (ConnectionResetError, BrokenPipeError, socket.error):
             print(f"{self.address[0]} got discconected!")
         finally:
-            self.cleanup() 
+            self.cleanup()
 
 
 
 class Server:
     """Class creates a socket that local machines can connect to and send msgs to"""
     def __init__(self,host="0.0.0.0", port=8000):
-        self.PORT = port # Holds to which PORT socket will be connected to
-        self.HOST = host # Holds...
+        self.port = port # Holds to which PORT socket will be connected to
+        self.host = host # Holds...
         self.clients = dict() # Holds key:client_address value:client_socket
+        self.server = None
 
+    def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
+        """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP"""
+        self.server = socket.socket(ipv,protocol)
+        self.server.bind((self.host, self.port))
 
-    def create_server(self,IPV=socket.AF_INET, PROTOCOL=socket.SOCK_STREAM):
-        self.server = socket.socket(IPV,PROTOCOL)
-        self.server.bind((self.HOST, self.PORT))
-    
     def accept_connection(self):
+        """Lisitens for connection and if found one accepts it and returns client information"""
         try:
 
             self.server.listen()
@@ -75,9 +80,9 @@ class Server:
             client = Client(*self.server.accept(),self)
 
             print(f"{client.address[0]} has connected!")
-            
+
             return client
-            
+
 
 
 
@@ -85,33 +90,36 @@ class Server:
             for client in self.clients.values():
                 client.cleanup()
             self.server.close()
-        
-    
+
+
     def send_to_all_clients(self,address,data):
+        """Sends msg to all clients"""
         print(f"({address}) -> {data}")
         for client in self.clients.values():
             client.socket.sendall(f"({address}) -> {data}".encode())
 
 
     def connection_loop(self):
+        """On loop lisitens for connections and recives/send msgs to everyone"""
         self.create_server()
-        
+
         while True:
 
             client = self.accept_connection() # Adress returns tuple (IP,PORT)
-            
+
             client.thread = threading.Thread(
                     target=client.recive_msg,
                     name=f"Thread{client.address[0]}:{client.address[1]}")
 
             self.clients[client.address] = client
-            
+
             client.thread.daemon = True
             client.thread.start()
 
 
 def main():
-    with open("server_config.json") as f:
+    """Runs program"""
+    with open("server_config.json", encoding="utf-8") as f:
         server_config = json.load(f)["server"]
 
     Server(**server_config).connection_loop()
