@@ -1,6 +1,11 @@
 """Client.py is used to connect with server.py and send msgs."""
 
-import socket, threading, json
+import socket
+import threading
+import json
+import sys
+
+
 
 
 
@@ -28,6 +33,8 @@ class Client:
         self.socket.connect((self.HOST, self.PORT))
     def cleanup(self):
         self.socket.close()
+        del self
+        sys.exit(0)
 
     def recive_msg(self):
 
@@ -37,15 +44,17 @@ class Client:
                 raw_data = self.socket.recv(bytes)
                 
                 if not raw_data:
-                    break                   
+                    raise ConnectionResetError                   
                 
                 data = raw_data.decode()
-                print(data)
+                print(f"\r{data}\n> ", end="", flush=True)
+ 
 
         except (ConnectionResetError, BrokenPipeError, socket.error):
             print("Connection Error from host side!")
 
         finally:
+            print("Host lost")
             self.cleanup()
 
     def send_msg(self):

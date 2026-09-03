@@ -33,7 +33,7 @@ class Client:
  
     def cleanup(self):
         """Removes itself from everywhere and deletes itself"""
-        del self.server.clients[self.address]
+        self.server.clients.pop(self.address, 0)
         self.client_socket.close()
         del self
 
@@ -45,13 +45,13 @@ class Client:
                 raw_data = self.client_socket.recv(bytes)
 
                 if not raw_data:
-                    break                 
+                    raise ConnectionResetError                
 
                 data = raw_data.decode()
                 self.server.send_to_all_clients(self.address,data)
 
         except (ConnectionResetError, BrokenPipeError, socket.error):
-            print(f"{self.address[0]} got discconected!")
+            print(f"{self.address} got disconnected!")
         finally:
             self.cleanup()
 
@@ -68,53 +68,63 @@ class Server:
     def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
         """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP"""
         self.server = socket.socket(ipv,protocol)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((self.host, self.port))
 
     def accept_connection(self):
         """Lisitens for connection and if found one accepts it and returns client information"""
-        try:
+        
+        self.server.listen()
+        print("Lisiting...")
 
-            self.server.listen()
-            print("Lisiting...")
+        client = Client(*self.server.accept(),self)
 
-            client = Client(*self.server.accept(),self)
+        print(f"{client.address[0]} has connected!")
 
-            print(f"{client.address[0]} has connected!")
-
-            return client
-
+        return client
 
 
 
-        except KeyboardInterrupt:
-            for client in self.clients.values():
-                client.cleanup()
-            self.server.close()
+
+
+
+    def cleanup(self):
+        """Closes up sockets and clients"""
+        self.server.close()
+        for client in self.clients.values():
+            client.cleanup()
 
 
     def send_to_all_clients(self,address,data):
         """Sends msg to all clients"""
         print(f"({address}) -> {data}")
         for client in self.clients.values():
-            client.socket.sendall(f"({address}) -> {data}".encode())
+            client.client_socket.sendall(f"({address}) -> {data}".encode())
 
 
     def connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""
         self.create_server()
 
-        while True:
+        try:
+            while True:
 
-            client = self.accept_connection() # Adress returns tuple (IP,PORT)
+                client = self.accept_connection() # Adress returns tuple (IP,PORT)
 
-            client.thread = threading.Thread(
-                    target=client.recive_msg,
-                    name=f"Thread{client.address[0]}:{client.address[1]}")
+                client.thread = threading.Thread(
+                        target=client.recive_msg,
+                        name=f"Thread{client.address[0]}:{client.address[1]}")
 
-            self.clients[client.address] = client
+                self.clients[client.address] = client
 
-            client.thread.daemon = True
-            client.thread.start()
+                client.thread.daemon = True
+                client.thread.start()
+        except KeyboardInterrupt:
+            print("KEYBAORD INTERRUPT CLOSING PROGRAM...")
+        
+        finally:
+            self.cleanup()
+            print("Program closed.")
 
 
 def main():

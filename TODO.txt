@@ -1,0 +1,7 @@
+1.Add try/except/finally to code. When there is keyinterupt or program closes unkwoingly.
+
+
+2.Fix terminal.
+
+
+3. Add login based system.
