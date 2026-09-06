@@ -29,3 +29,6 @@ Very very simple, multi device TCP socket application built in Python for real-t
 1. Inside your server_config.json put in client host: "Your server IPV4"
 2. On any local machine run client.py
 3. Done! you are connected to that server
+
+
+This is my first repo. So please don't be mean 
