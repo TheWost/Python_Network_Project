@@ -1,7 +1,26 @@
-1.Add try/except/finally to code. When there is keyinterupt or program closes unkwoingly.
+TUI TODO
+
+[ ] Create main numbered menu
+[ ] Make menu options call their corresponding methods
+
+[ ] Login / Logout prompt
+
+[ ] Group Chat
+    [ ] Enter chat prompt
+    [ ] Keep accepting messages
+    [ ] EXIT returns to main menu
+
+[ ] Whisper
+    [ ] Ask for target username
+    [ ] Ask for message
+    [ ] Return to main menu
+
+[ ] Remote Command
+    [ ] Ask for command
+    [ ] Return to main menu
+
+[ ] Settings
+    [ ] Always leave using EXIT command.
 
 
-2.Fix terminal.
-
-
-3. Add login based system.
+[ ] After TUI works: start designing message objectsI

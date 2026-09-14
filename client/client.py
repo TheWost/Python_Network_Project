@@ -3,18 +3,9 @@
 import socket
 import threading
 import json
+
 import sys
-
-
-
-
-
-# Client will work on two threads
-#   1. Takes care of reciving messages 
-#   2. Takes care of taking user output and sending into server or any desired PORT
-
-
-
+from pathlib import Path
 
 
 class Client:
@@ -28,7 +19,7 @@ class Client:
         self.HOST = host
         self.PORT = port
         self.thread = None
-    
+
     def connect_host(self):
         self.socket.connect((self.HOST, self.PORT))
     def cleanup(self):
@@ -39,13 +30,13 @@ class Client:
     def recive_msg(self):
 
         bytes = 1024
-        try: 
+        try:
             while True:
                 raw_data = self.socket.recv(bytes)
-                
+ 
                 if not raw_data:
-                    raise ConnectionResetError                   
-                
+                    raise ConnectionResetError
+
                 data = raw_data.decode()
                 print(f"\r{data}\n> ", end="", flush=True)
  
@@ -61,13 +52,13 @@ class Client:
         try:
 
 
-            while True:        
+            while True:
                 user_input = input("> ").encode()
                 self.socket.sendall(user_input)
-        
+ 
         except KeyboardInterrupt:
             print("\n-- ^C stopping connection...")
-        
+
         finally:
             self.cleanup()
             print("-- Connection closed.")
@@ -82,14 +73,15 @@ class Client:
 
         self.send_msg()
 
-            
 
 
-        
+
+
 def main():
-    server_config_path = "server_config.json"
+    
+    CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "server_config.json"
 
-    with open(server_config_path) as f:
+    with open(CONFIG_PATH) as f:
         server_config = json.load(f)["client"]
 
 
