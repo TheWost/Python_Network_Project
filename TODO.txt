@@ -1,5 +1,6 @@
 TUI TODO
 
+
 [X] Create main numbered menu
 [X] Make menu options call their corresponding methods
 
@@ -24,3 +25,13 @@ TUI TODO
 
 
 [ ] After TUI works: start designing message objectsI
+
+
+
+
+[ ] Connect TUi.py with client.py
+[ ] let tui call client methods
+[ ] Change client methods that were used to talk with server. And make one main command that sends msg to server
+[ ] change msg dict to json string
+[ ] Server recives JSON. Use dumps on it to make it go back to normal
+

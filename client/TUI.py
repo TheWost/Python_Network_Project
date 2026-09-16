@@ -4,6 +4,7 @@ from colorama import init, Fore, Style
 import json
 from configs.config import Config
 from classes.message import msg 
+from client.client import Client
 
 
 init(autostart=True)
@@ -12,6 +13,7 @@ class Tui:
     def __init__(self):
         self.__name = None
         self.__config = Config("tui_settings").load_data()
+        self.__client = Client()
 
     def _print_menu(self):
         print(f"=== {self.__name if self.__name else "GUEST"} ===")

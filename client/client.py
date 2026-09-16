@@ -48,6 +48,12 @@ class Client:
             print("Host lost")
             self.cleanup()
 
+
+
+    def send_to_server(self, msg):
+        self.socket.sendall(msg)
+
+
     def send_msg(self):
         try:
 
