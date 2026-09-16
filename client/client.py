@@ -51,36 +51,7 @@ class Client:
 
 
     def send_to_server(self, msg):
-        self.socket.sendall(msg)
-
-
-    def send_msg(self):
-        try:
-
-
-            while True:
-                user_input = input("> ").encode()
-                self.socket.sendall(user_input)
- 
-        except KeyboardInterrupt:
-            print("\n-- ^C stopping connection...")
-
-        finally:
-            self.cleanup()
-            print("-- Connection closed.")
-
-
-    def run(self):
-        self.connect_host()
-
-        self.thread = threading.Thread(target=self.recive_msg)
-        self.thread.daemon = True
-        self.thread.start()
-
-        self.send_msg()
-
-
-
+        self.socket.sendall(msg.encode())
 
 
 def main():

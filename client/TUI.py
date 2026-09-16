@@ -10,12 +10,12 @@ from client.client import Client
 init(autostart=True)
 
 class Tui:
-    def __init__(self):
+    def __init__(self, client):
         self.__name = None
         self.__config = Config("tui_settings").load_data()
-        self.__client = Client()
+        self.__client = client
 
-    def _print_menu(self):
+    def __print_menu(self):
         print(f"=== {self.__name if self.__name else "GUEST"} ===")
         print(f"1. {"log out" if self.__name else "Log in}"}")
         print("2. Group Chat")
@@ -74,7 +74,8 @@ class Tui:
 
             user_msg = input("> ")
             self.__return_if_exit(user_msg)
-            pass # Need to implement from client send to everyone
+            user_msg = msg(msg_type="chat", action="gropp",data=user_msg)
+            client.
 
 
     def _choose_client(self, client_names):
