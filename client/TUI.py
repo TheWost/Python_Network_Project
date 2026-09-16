@@ -3,6 +3,7 @@ from pathlib import Path
 from colorama import init, Fore, Style
 import json
 from configs.config import Config
+from classes.message import msg 
 
 
 init(autostart=True)
