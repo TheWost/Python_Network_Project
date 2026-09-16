@@ -1,14 +1,14 @@
 TUI TODO
 
-[ ] Create main numbered menu
-[ ] Make menu options call their corresponding methods
+[X] Create main numbered menu
+[X] Make menu options call their corresponding methods
 
-[ ] Login / Logout prompt
+[X] Login / Logout prompt
 
-[ ] Group Chat
-    [ ] Enter chat prompt
-    [ ] Keep accepting messages
-    [ ] EXIT returns to main menu
+[X] Group Chat
+    [X] Enter chat prompt
+    [X] Keep accepting messages
+    [X] EXIT returns to main menu
 
 [ ] Whisper
     [ ] Ask for target username
