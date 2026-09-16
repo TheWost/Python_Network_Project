@@ -21,17 +21,13 @@ class Server:
         """Lisitens for connection and if found one accepts it and returns client information"""
  
         self.server.listen()
-        print("Lisiting...")
+        print("listening...")
 
         client = Client(*self.server.accept(),self)
 
         print(f"{client.address[0]} has connected!")
 
         return client
-
-
-
-
 
 
     def cleanup(self):

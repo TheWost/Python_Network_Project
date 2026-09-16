@@ -29,9 +29,9 @@ TUI TODO
 
 
 
-[ ] Connect TUi.py with client.py
-[ ] let tui call client methods
-[ ] Change client methods that were used to talk with server. And make one main command that sends msg to server
-[ ] change msg dict to json string
+[X] Connect TUi.py with client.py
+[X] let tui call client methods
+[X] Change client methods that were used to talk with server. And make one main command that sends msg to server
+[X] change msg dict to json string
 [ ] Server recives JSON. Use dumps on it to make it go back to normal
 
