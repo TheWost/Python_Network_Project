@@ -11,11 +11,15 @@ class Server:
         self.host = host # Holds...
         self.__clients = dict() # Holds key:client_address value:client_socket
         self.server = None
-        self.msg_types = {
-            "chat": ["group", "whisper"],
-            "query": ["get_users"],
-            "command": ["remote_control"],
+        self.action_map = {
+                "chat": {
+                    "whisper": self.whisper,
+                    "group": self.broadcast
+                },
+                "query" : {
+                    "get_users": self.get_all_clients # For now it is clients. Once login will be implemeneted. It wil lbe users
         }
+
   def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
         """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP"""
         self.server = socket.socket(ipv,protocol)
