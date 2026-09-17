@@ -10,23 +10,26 @@ class Client:
 
         Holds values esseintal for client to recive and send packets."""
     def __init__(self,client_socket,address, server):
-        self.client_socket = client_socket
+        self.__client_socket = client_socket
         self.address = address
-        self.thread = None
         self.server = server
  
     def cleanup(self):
         """Removes itself from everywhere and deletes itself"""
         self.server.clients.pop(self.address, 0)
-        self.client_socket.close()
+        self.__client_socket.close()
         del self
+
+
+    def send_msg(self, data):
+        self.__client_socket.sendall(data.encode())
 
     def recive_msg(self):
         """Lisitens for msg from it's connected socket"""
         bytes = 1024
         try:
             while True:
-                raw_data = self.client_socket.recv(bytes)
+                raw_data = self.__client_socket.recv(bytes)
 
                 if not raw_data:
                     raise ConnectionResetError

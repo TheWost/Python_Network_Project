@@ -2,6 +2,7 @@
 import threading
 import socket
 from client import Client
+import
 
 class Server:
     """Class creates a socket that local machines can connect to and send msgs to"""
@@ -10,8 +11,12 @@ class Server:
         self.host = host # Holds...
         self.__clients = dict() # Holds key:client_address value:client_socket
         self.server = None
-
-    def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
+        self.msg_types = {
+            "chat": ["group", "whisper"],
+            "query": ["get_users"],
+            "command": ["remote_control"],
+        }
+  def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
         """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP"""
         self.server = socket.socket(ipv,protocol)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -20,15 +25,19 @@ class Server:
 
 
     def append_clients(self,client):
+        """Appends client to server client list"""
         self.__clients[client.address] = client
 
     def get_client(self, address):
+        """Returns client wit that address"""
         return self.__clients[address]
 
     def get_all_clients(self):
+        """Returns list of all clients"""
         return self.__clients.values()
 
     def get_clients_count(self):
+        """Returns total count of client connected to server"""
         return len(self.__clients)
 
     def accept_connection(self):
@@ -60,11 +69,12 @@ class Server:
             client.send_msg(f"({src}) -> {data}".encode())
 
 
+    def msg_handler(self, address, msg):
+        pass
+
     def whisper(self, src, dst, data):
         """Sends msg to choosen client"""
         self.get_client(dst).send_msg(f"{src} -> {data}")
-
-
 
     def connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""
@@ -73,13 +83,16 @@ class Server:
         try:
             while True:
 
-                connection = threading.Thread(
-                        target=self.accept_connection,
-                        name=f"Connection for client number {self.get_clients_count()}"
-                        )
+                client = self.accept_connection() # Adress returns tuple (IP,PORT)
 
-                connection.daemon = True
-                connection.start()
+                client.thread = threading.Thread(
+                        target=client.recive_msg,
+                        name=f"Thread{client.address[0]}:{client.address[1]}")
+
+                self.clients[client.address] = client
+
+                client.thread.daemon = True
+                client.thread.start()
 
         except KeyboardInterrupt:
             print("KEYBAORD INTERRUPT CLOSING PROGRAM...")
