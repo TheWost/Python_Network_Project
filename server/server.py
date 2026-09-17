@@ -2,6 +2,7 @@
 import threading
 import socket
 from server.client import Client
+from classes.exceptions import InvalidMsgType, InvalidMsgAction
 
 
 class Server:
@@ -74,7 +75,18 @@ class Server:
 
 
     def msg_handler(self, address, msg):
-        pass
+        actions = self.action_map.get(msg[msg_type])
+
+        if not actions:
+            raise InvalidMsgType(f"Given msg type from {address} was invalid")
+
+        func = actions.get(msg[action])
+
+        if not func:
+            raise InvalidMsgAction(f"Given msg action from {address} was invalid")
+
+        func(address, msg)
+
 
     def whisper(self, src, dst, data):
         """Sends msg to choosen client"""
