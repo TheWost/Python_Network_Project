@@ -11,13 +11,14 @@ init(autostart=True)
 
 class Tui:
     def __init__(self, client):
-        self.__name = None
         self.__config = Config("tui_settings").load_data()
         self.__client = client
+        self.__username = None
+        self.login()
 
     def __print_menu(self):
-        print(f"=== {self.__name if self.__name else "GUEST"} ===")
-        print(f"1. {"log out" if self.__name else "Log in}"}")
+        print(f"=== {self.__username if self.__name else "GUEST"} ===")
+        print(f"1. {"log out" if self.__username else "Log in}"}")
         print("2. Group Chat")
         print("3. Whisper")
         print("4. Remote command")
@@ -64,14 +65,15 @@ class Tui:
 
     def login(self):
         user_login = input("Enter your login: ")
-        self.__name = user_login
+        self.__username = user_login
+        self.__client.send_register(self.__username)
 
     def logout(self):
-        self.__name = None
+        self.__username = None
         input("Sing out!")
 
     def get_name(self):
-        return self.__name
+        return self.__username
 
 
     def send_msg(self, group, action, data):
@@ -101,6 +103,8 @@ class Tui:
 
         user_msg = self._user_input()
 
+        self.__client.send_whisper(user_msg, client)
+
 
     def remote_command(self):
         # Same idea like in whisper. Just ask for command instead. 
@@ -118,7 +122,7 @@ class Tui:
             match user_choice:
 
                 case "1":
-                    if self.__name:
+                    if self.__username:
                         self.logout()
                     else:
                         self.login()

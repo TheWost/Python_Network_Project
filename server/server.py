@@ -11,6 +11,7 @@ class Server:
         self.port = port # Holds to which PORT socket will be connected to
         self.host = host # Holds...
         self.__clients = dict() # Holds key:client_address value:client_socket
+        self.__users = dict()     # username -> Client
         self.server = None
         self.action_map = {
                 "chat": {
@@ -19,9 +20,15 @@ class Server:
                 },
                 "query" : {
                     "get_usersnames": self.get_all_clients # For now it is clients. Once login will be implemeneted. It wil lbe users
+                },
+                "auth" : {
+                    "register": self.register
+            }
         }
 
-  def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
+
+
+    def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
         """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP"""
         self.server = socket.socket(ipv,protocol)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -88,10 +95,16 @@ class Server:
 
         func(address, msg)
 
+    def register(self,address, msg):
+        self.__username[self.get_client(address)] = msg["data"] # Here data will be actually username
 
-    def whisper(self, src, dst, data):
+
+    def whisper(self,address, msg):
         """Sends msg to choosen client"""
-        self.get_client(dst).send_msg(f"{src} -> {data}")
+
+        self.get_client().send_msg(f"{src} -> {data}")
+
+
 
     def connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""

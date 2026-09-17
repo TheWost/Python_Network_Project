@@ -58,6 +58,11 @@ class Client:
         sys.exit(0)
 
 
+    def send_register(self, username):
+        msg = format_msg(msg_type="auth",action="register",data=username)
+        self.send_to_server(msg)
+
+
     def get_usernames(self):
         msg = format_msg(msg_type="query", msg_action="get_usernames")
 
@@ -69,8 +74,8 @@ class Client:
 
         return response
 
-    def send_whisper(self, data):
-        msg = format_msg(msg_type = "chat", action="whisper", src=self.
+    def send_whisper(self, data, dst):
+        msg = format_msg(msg_type = "chat", action="whisper", dst=dst)
 
 
     def _handle_whisper(self, msg):
