@@ -75,12 +75,13 @@ class Server:
 
 
     def msg_handler(self, address, msg):
-        actions = self.action_map.get(msg[msg_type])
+        """Takes msg type and action and sends it to correct function"""
+        actions = self.action_map.get(msg["msg_type"])
 
         if not actions:
             raise InvalidMsgType(f"Given msg type from {address} was invalid")
 
-        func = actions.get(msg[action])
+        func = actions.get(msg["action"])
 
         if not func:
             raise InvalidMsgAction(f"Given msg action from {address} was invalid")

@@ -4,6 +4,7 @@ import socket
 import threading
 import json
 from classes.message import format_msg
+from classes.exceptions import InvalidMsgType, InvalidMsgAction
 
 import sys
 from pathlib import Path
@@ -20,6 +21,15 @@ class Client:
         self.HOST = host
         self.PORT = port
         self.thread = None
+        self.action_map = {
+                "response": {
+                    "get_users": self._handle_response
+                },
+                "chat": {
+                    "whisper": self._handle_whisper,
+                    "chat": self._handle_chat
+                }
+        }
 
 
         self.__temp_response = None
@@ -41,6 +51,7 @@ class Client:
 
     def connect_host(self):
         self.socket.connect((self.HOST, self.PORT))
+
     def cleanup(self):
         self.socket.close()
         del self
@@ -58,14 +69,29 @@ class Client:
 
         return response
 
+    def _handle_whisper(self, msg):
+        print(
 
-    def __response_msg(self, msg):
+    def _handle_response(self, msg):
         self.__temp_response = msg
         self.__response_ready.set()
 
 
     def msg_handler(self, msg):
-        
+
+        actions = self.action_map.get(msg["msg_type"])
+
+        if not actions:
+            raise InvalidMsgType("Given msg type from host was invalid!!")
+
+        func = actions.get(msg["action"])
+
+        if not func:
+            raise InvalidMsgAction("Given msg action from host was invalid!!")
+
+        func(msg)
+
+
 
     def recive_msg(self):
 
@@ -77,12 +103,19 @@ class Client:
                 if not raw_data:
                     raise ConnectionResetError
 
-                data = raw_data.decode()
-                print(f"\r{data}\n> ", end="", flush=True)
+
+                msg = raw_data.decode()
+
+
+                self.msg_handler(msg)
  
 
         except (ConnectionResetError, BrokenPipeError, socket.error):
             print("Connection Error from host side!")
+
+        except (json.JSONDecodeError, TypeError):
+            print("Invalid msg. Could not format msg to JSON.")
+
 
         finally:
             print("Host lost")
