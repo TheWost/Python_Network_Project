@@ -17,8 +17,14 @@ class Server:
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((self.host, self.port))
 
+
+
+    def append_clients(self,client):
+        self.clients[client.address] = client
+
+
     def accept_connection(self):
-        """Lisitens for connection and if found one accepts it and returns client information"""
+        """Lisitens for connection and if found one accepts it"""
  
         self.server.listen()
         print("listening...")
@@ -27,7 +33,8 @@ class Server:
 
         print(f"{client.address[0]} has connected!")
 
-        return client
+
+        self.append_clients(client)
 
 
     def cleanup(self):
@@ -44,6 +51,10 @@ class Server:
             client.client_socket.sendall(f"({address}) -> {data}".encode())
 
 
+    def get_clients_count(self):
+        return len(self.clients)
+
+
     def connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""
         self.create_server()
@@ -51,18 +62,17 @@ class Server:
         try:
             while True:
 
-                client = self.accept_connection() # Adress returns tuple (IP,PORT)
+                connection = threading.Thread(
+                        target=self.accept_connection,
+                        name=f"Connection for client number {self.get_clients_count()}"
+                        )
 
-                client.thread = threading.Thread(
-                        target=client.recive_msg,
-                        name=f"Thread{client.address[0]}:{client.address[1]}")
+                connection.daemon = True
+                connection.start()
 
-                self.clients[client.address] = client
-
-                client.thread.daemon = True
-                client.thread.start()
         except KeyboardInterrupt:
             print("KEYBAORD INTERRUPT CLOSING PROGRAM...")
+            break
 
         finally:
             self.cleanup()
