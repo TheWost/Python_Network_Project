@@ -1,8 +1,8 @@
 """TCP Server module for accepting connections and broadcasting messages."""
 import threading
 import socket
-from client import Client
-import
+from server.client import Client
+
 
 class Server:
     """Class creates a socket that local machines can connect to and send msgs to"""
