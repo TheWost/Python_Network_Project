@@ -8,7 +8,7 @@ class Server:
     def __init__(self,host="0.0.0.0", port=8000):
         self.port = port # Holds to which PORT socket will be connected to
         self.host = host # Holds...
-        self.clients = dict() # Holds key:client_address value:client_socket
+        self.__clients = dict() # Holds key:client_address value:client_socket
         self.server = None
 
     def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
@@ -20,8 +20,16 @@ class Server:
 
 
     def append_clients(self,client):
-        self.clients[client.address] = client
+        self.__clients[client.address] = client
 
+    def get_client(self, address):
+        return self.__clients[address]
+
+    def get_all_clients(self):
+        return self.__clients.values()
+
+    def get_clients_count(self):
+        return len(self.__clients)
 
     def accept_connection(self):
         """Lisitens for connection and if found one accepts it"""
@@ -40,19 +48,22 @@ class Server:
     def cleanup(self):
         """Closes up sockets and clients"""
         self.server.close()
-        for client in self.clients.values():
+        for client in self.get_all_clients():
             client.cleanup()
 
 
-    def send_to_all_clients(self,address,data):
+    def send_to_all_clients(self,src,data):
         """Sends msg to all clients"""
-        print(f"({address}) -> {data}")
-        for client in self.clients.values():
-            client.client_socket.sendall(f"({address}) -> {data}".encode())
+        print(f"({src}) -> {data}")
+
+        for client in self.get_all_clients():
+            client.send_msg(f"({src}) -> {data}".encode())
 
 
-    def get_clients_count(self):
-        return len(self.clients)
+    def whisper(self, src, dst, data):
+        """Sends msg to choosen client"""
+        self.get_client(dst).send_msg(f"{src} -> {data}")
+
 
 
     def connection_loop(self):
