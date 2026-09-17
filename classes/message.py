@@ -1,6 +1,6 @@
 import json
 
-def msg(msg_type, action, data=""):
+def format_msg(msg_type, action, data=""):
 
     aviable_msg_types = ["command", "query", "chat"]
 

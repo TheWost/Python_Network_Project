@@ -1,6 +1,7 @@
 """Client connection hadnler for socket communication."""
 
 import socket
+import json
 
 class Client:
     """ARGS:
@@ -20,6 +21,8 @@ class Client:
         self.__client_socket.close()
         del self
 
+    def msg_handler(self, address, msg):
+        self.server.msg_handler(address, msg)
 
     def send_msg(self, data):
         self.__client_socket.sendall(data.encode())
@@ -35,7 +38,8 @@ class Client:
                     raise ConnectionResetError
 
                 data = raw_data.decode()
-                self.server.send_to_all_clients(self.address,data)
+                data = json.loads(data)
+                self.msg_handler(self.address,data)
 
         except (ConnectionResetError, BrokenPipeError, socket.error):
             print(f"{self.address} got disconnected!")

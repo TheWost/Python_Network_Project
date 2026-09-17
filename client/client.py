@@ -3,6 +3,7 @@
 import socket
 import threading
 import json
+from classes.message import format_msg
 
 import sys
 from pathlib import Path
@@ -20,12 +21,51 @@ class Client:
         self.PORT = port
         self.thread = None
 
+
+        self.__temp_response = None
+        self.__response_ready = threading.Event()
+
+
+    @classmetho
+    def from_config(cls):
+        CONFIG_PATH = (
+            Path(__file__).resolve().parent.parent
+            / "config"
+            / "server_config.json"
+        )
+
+        with open(CONFIG_PATH) as f:
+            server_config = json.load(f)["client"]
+
+        return cls(**server_config)d
+
     def connect_host(self):
         self.socket.connect((self.HOST, self.PORT))
     def cleanup(self):
         self.socket.close()
         del self
         sys.exit(0)
+
+
+    def get_users(self):
+        msg = format_msg(msg_type="query", msg_action="get_users")
+
+        self.send_to_server(msg)
+
+        self.__response_ready.wait()
+
+        response, self.__temp_response = self.__temp_response, None
+
+        return response
+
+
+    def __response_msg(self, msg):
+        self.__temp_response = msg
+        self.__response_ready.set()
+
+
+    def msg_handler(self, msg):
+        
 
     def recive_msg(self):
 
@@ -54,17 +94,3 @@ class Client:
         self.socket.sendall(msg.encode())
 
 
-def main():
-    
-    CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "server_config.json"
-
-    with open(CONFIG_PATH) as f:
-        server_config = json.load(f)["client"]
-
-
-    Client(**server_config).run()
-
-
-
-if __name__ == "__main__":
-    main()

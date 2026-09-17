@@ -3,7 +3,7 @@ from pathlib import Path
 from colorama import init, Fore, Style
 import json
 from configs.config import Config
-from classes.message import msg 
+from classes.message import format_msg 
 from client.client import Client
 
 
@@ -68,14 +68,20 @@ class Tui:
         return self.__name
 
 
+    def send_msg(self, group, action, data):
+
+        msg = format_msg(group = group, action= action, data=data)
+
+        self.__client.send_to_server(msg)
+
 
     def group_chat(self):
         while True:
 
             user_msg = input("> ")
             self.__return_if_exit(user_msg)
-            user_msg = msg(msg_type="chat", action="gropp",data=user_msg)
-            client.
+            user_msg = msg(msg_type="chat", action="group",data=user_msg)
+            client.send_to_server(user_msg)
 
 
     def _choose_client(self, client_names):
@@ -85,7 +91,8 @@ class Tui:
 
 
     def whisper(self):
-        # clients = Need to ask server for list of clients names
+        get_users_query = msg(msg_type="query", action="get_users")
+        
         client = _choose_client() # need to put clients_names
         # here needs to add creating a msg
         # Then use self.__return_if_exit
