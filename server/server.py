@@ -18,7 +18,7 @@ class Server:
                     "group": self.broadcast
                 },
                 "query" : {
-                    "get_users": self.get_all_clients # For now it is clients. Once login will be implemeneted. It wil lbe users
+                    "get_usersnames": self.get_all_clients # For now it is clients. Once login will be implemeneted. It wil lbe users
         }
 
   def create_server(self,ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):

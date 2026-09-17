@@ -23,7 +23,7 @@ class Client:
         self.thread = None
         self.action_map = {
                 "response": {
-                    "get_users": self._handle_response
+                    "get_usernames": self._handle_response
                 },
                 "chat": {
                     "whisper": self._handle_whisper,
@@ -36,7 +36,7 @@ class Client:
         self.__response_ready = threading.Event()
 
 
-    @classmetho
+    @classmethod
     def from_config(cls):
         CONFIG_PATH = (
             Path(__file__).resolve().parent.parent
@@ -47,7 +47,7 @@ class Client:
         with open(CONFIG_PATH) as f:
             server_config = json.load(f)["client"]
 
-        return cls(**server_config)d
+        return cls(**server_config)
 
     def connect_host(self):
         self.socket.connect((self.HOST, self.PORT))
@@ -58,10 +58,10 @@ class Client:
         sys.exit(0)
 
 
-    def get_users(self):
-        msg = format_msg(msg_type="query", msg_action="get_users")
+    def get_usernames(self):
+        msg = format_msg(msg_type="query", msg_action="get_usernames")
 
-        self.send_to_server(msg)
+        self._send_to_server(msg)
 
         self.__response_ready.wait()
 
@@ -69,8 +69,12 @@ class Client:
 
         return response
 
+    def send_whisper(self, data):
+        msg = format_msg(msg_type = "chat", action="whisper", src=self.
+
+
     def _handle_whisper(self, msg):
-        print(
+        print(f"{msg["src"] -> msg["data"])
 
     def _handle_response(self, msg):
         self.__temp_response = msg
@@ -123,7 +127,7 @@ class Client:
 
 
 
-    def send_to_server(self, msg):
+    def _send_to_server(self, msg):
         self.socket.sendall(msg.encode())
 
 

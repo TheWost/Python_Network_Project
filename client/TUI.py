@@ -55,6 +55,12 @@ class Tui:
         for index,item in enumerate(items, start=1):
             print(f"{index}. {item}")
 
+    def _user_input(self):
+        user_msg = input("> ")
+        self.__return_if_exit(user_msg)
+        return user_msg
+
+
 
     def login(self):
         user_login = input("Enter your login: ")
@@ -78,8 +84,6 @@ class Tui:
     def group_chat(self):
         while True:
 
-            user_msg = input("> ")
-            self.__return_if_exit(user_msg)
             user_msg = msg(msg_type="chat", action="group",data=user_msg)
             client.send_to_server(user_msg)
 
@@ -91,11 +95,12 @@ class Tui:
 
 
     def whisper(self):
-        get_users_query = msg(msg_type="query", action="get_users")
-        
-        client = _choose_client() # need to put clients_names
-        # here needs to add creating a msg
-        # Then use self.__return_if_exit
+        clients = self.__client.get_usersnames()
+
+        client = self._choose_client(clients)
+
+        user_msg = self._user_input()
+
 
     def remote_command(self):
         # Same idea like in whisper. Just ask for command instead. 

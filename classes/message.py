@@ -10,7 +10,10 @@ def format_msg(msg_type, action,dst="", src="", data=""):
 
 
 
-    return json.dumps({"type": msg_type,
+    return json.dumps({
+            "type": msg_type,
             "action": action,
-            "data": data
+            "data": data,
+            "dst": dst,
+            "src": src
             })
