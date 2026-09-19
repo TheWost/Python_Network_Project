@@ -53,8 +53,16 @@ class Tui:
 
     def login(self):
         user_login = input("Enter your login: ")
-        self.__username = user_login
-        self.__client.send_register(self.__username)
+
+        response = self.__client.send_register(self.__username)
+
+        valid = response["data"]
+        if valid:
+            self.__username = user_login
+
+        else:
+            if response["reason"]:
+                self.__invalid_input(prompt=response["reason"])
 
     def logout(self):
         self.__username = None
@@ -70,7 +78,7 @@ class Tui:
         self.__print_out_list(*clients_names)
         user_choice = self.__int_input(
             len(clients_names)
-        )  # Here we need to add len(clients_names)
+        )
         return clients_names[user_choice]
 
     def whisper(self):
@@ -96,24 +104,35 @@ class Tui:
             self._print_menu()
             user_choice = input("> ")
 
+            logged = True if self.__username else False
+
             match user_choice:
                 case "1":
-                    if self.__username:
+                    if logged:
                         self.logout()
                     else:
                         self.login()
 
                 case "2":
-                    self.group_chat()
+                    if logged:
+                        self.group_chat()
+                    else:
+                        self.__invalid_input()
 
                 case "3":
-                    self.whisper()
+                    if logged:
+                        self.whisper()
+                    else:
+                        self.__invalid_input()
 
                 case "4":
-                    self.remote_command()
+                    if logged:
+                        self.remote_command()
+                    else:
+                        self.__invalid_input()
 
                 case "5":
                     break
 
                 case _:
-                    input("Invalid answer")
+                    self.__invalid_input()
