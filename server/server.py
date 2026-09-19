@@ -5,6 +5,8 @@ import threading
 
 from classes.exceptions import InvalidMsgAction, InvalidMsgType
 from server.client import Client
+from classes.message import format_msg
+
 
 
 class Server:
@@ -84,14 +86,28 @@ class Server:
         func(address, msg)
 
     def register(self, address, msg):
-        # self.__username[self.get_client(address)] = msg["data"] # Here data will be actually username
-        pass
+        username = msg["data"]
+
+        client = self.get_client(address)
+
+        if username not in self.__users:
+            self.__users[username] = client
+
+            msg = format_msg(msg_type = "response", action = "register", data="valid")
+
+        else:
+            msg = format_msg(msg_type="response", action="register", data="invalid")
+
+
+        client.send_msg(msg)
+
+
+
 
     def whisper(self, address, msg):
         """Sends msg to choosen client"""
 
         return
-        # self.get_client().send_msg(f"{src} -> {data}")
 
     def connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""

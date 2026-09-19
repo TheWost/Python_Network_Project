@@ -23,7 +23,7 @@ class Client:
         self.PORT = port
         self.thread = None
         self.action_map = {
-            "response": {"get_usernames": self._handle_response},
+            "response": {"get_usernames": self._handle_response, "register": self._handle_response},
             "chat": {"whisper": self._handle_whisper, "chat": self._handle_chat},
         }
 
@@ -49,18 +49,29 @@ class Client:
         del self
         sys.exit(0)
 
-    def send_register(self, username):
-        msg = format_msg(msg_type="auth", action="register", data=username)
-        self._send_to_server(msg)
-
-    def get_usernames(self):
-        msg = format_msg(msg_type="query", action="get_usernames")
-
+    def _send_and_wait(self, msg):
         self._send_to_server(msg)
 
         self.__response_ready.wait()
 
         response, self.__temp_response = self.__temp_response, None
+
+        self.__response_ready.clear()
+
+        return response
+
+    def send_register(self, username):
+        msg = format_msg(msg_type="auth", action="register", data=username)
+
+        response = self._send_and_wait(msg)
+
+        return response
+
+
+    def get_usernames(self):
+        msg = format_msg(msg_type="query", action="get_usernames")
+
+        response = self._send_and_wait(msg)
 
         return response
 
