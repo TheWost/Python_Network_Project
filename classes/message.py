@@ -1,19 +1,13 @@
 import json
 
-def format_msg(msg_type, action,dst="", src="", data=""):
+
+def format_msg(msg_type, action, dst="", src="", data=""):
 
     aviable_msg_types = ["command", "query", "chat"]
-
 
     if not msg_type in aviable_msg_types:
         raise ValueError("Invalid msg type")
 
-
-
-    return json.dumps({
-            "type": msg_type,
-            "action": action,
-            "data": data,
-            "dst": dst,
-            "src": src
-            })
+    return json.dumps(
+        {"type": msg_type, "action": action, "data": data, "dst": dst, "src": src}
+    )

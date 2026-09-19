@@ -1,20 +1,23 @@
 """Client connection hadnler for socket communication."""
 
-import socket
 import json
+import threading
+
 
 class Client:
     """ARGS:
-        socket: socket
-        address: str
-        server: Server
+    socket: socket
+    address: str
+    server: Server
 
-        Holds values esseintal for client to recive and send packets."""
-    def __init__(self,client_socket,address, server):
+    Holds values esseintal for client to recive and send packets."""
+
+    def __init__(self, client_socket, address, server):
         self.__client_socket = client_socket
         self.address = address
         self.server = server
- 
+        self.thread: threading.Thread | None = None
+
     def cleanup(self):
         """Removes itself from everywhere and deletes itself"""
         self.server.clients.pop(self.address, 0)
@@ -39,9 +42,9 @@ class Client:
 
                 data = raw_data.decode()
                 data = json.loads(data)
-                self.msg_handler(self.address,data)
+                self.msg_handler(self.address, data)
 
-        except (ConnectionResetError, BrokenPipeError, socket.error):
+        except (OSError, ConnectionResetError, BrokenPipeError):
             print(f"{self.address} got disconnected!")
         finally:
             self.cleanup()

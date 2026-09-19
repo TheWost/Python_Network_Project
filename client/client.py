@@ -1,47 +1,39 @@
 """Client.py is used to connect with server.py and send msgs."""
 
-import socket
-import threading
 import json
-from classes.message import format_msg
-from classes.exceptions import InvalidMsgType, InvalidMsgAction
-
+import socket
 import sys
+import threading
 from pathlib import Path
+
+from classes.exceptions import InvalidMsgAction, InvalidMsgType
+from classes.message import format_msg
 
 
 class Client:
     """ARGS:
-        address: str
-        socket.
+    address: str
+    socket.
 
-        Holds values esseintal for client to recive and send packets."""
+    Holds values esseintal for client to recive and send packets."""
+
     def __init__(self, port, host, IPV=socket.AF_INET, PROTOCOL=socket.SOCK_STREAM):
-        self.socket = socket.socket(IPV,PROTOCOL)
+        self.socket = socket.socket(IPV, PROTOCOL)
         self.HOST = host
         self.PORT = port
         self.thread = None
         self.action_map = {
-                "response": {
-                    "get_usernames": self._handle_response
-                },
-                "chat": {
-                    "whisper": self._handle_whisper,
-                    "chat": self._handle_chat
-                }
+            "response": {"get_usernames": self._handle_response},
+            "chat": {"whisper": self._handle_whisper, "chat": self._handle_chat},
         }
-
 
         self.__temp_response = None
         self.__response_ready = threading.Event()
 
-
     @classmethod
     def from_config(cls):
         CONFIG_PATH = (
-            Path(__file__).resolve().parent.parent
-            / "config"
-            / "server_config.json"
+            Path(__file__).resolve().parent.parent / "config" / "server_config.json"
         )
 
         with open(CONFIG_PATH) as f:
@@ -57,14 +49,12 @@ class Client:
         del self
         sys.exit(0)
 
-
     def send_register(self, username):
-        msg = format_msg(msg_type="auth",action="register",data=username)
-        self.send_to_server(msg)
-
+        msg = format_msg(msg_type="auth", action="register", data=username)
+        self._send_to_server(msg)
 
     def get_usernames(self):
-        msg = format_msg(msg_type="query", msg_action="get_usernames")
+        msg = format_msg(msg_type="query", action="get_usernames")
 
         self._send_to_server(msg)
 
@@ -75,16 +65,17 @@ class Client:
         return response
 
     def send_whisper(self, data, dst):
-        msg = format_msg(msg_type = "chat", action="whisper", dst=dst)
+        msg = format_msg(msg_type="chat", action="whisper", dst=dst)
 
+    def _handle_chat(self):
+        return
 
     def _handle_whisper(self, msg):
-        print(f"{msg["src"] -> msg["data"])
+        print(f"{msg['src']} -> {msg['data']}")
 
     def _handle_response(self, msg):
         self.__temp_response = msg
         self.__response_ready.set()
-
 
     def msg_handler(self, msg):
 
@@ -100,39 +91,29 @@ class Client:
 
         func(msg)
 
-
-
     def recive_msg(self):
 
         bytes = 1024
         try:
             while True:
                 raw_data = self.socket.recv(bytes)
- 
+
                 if not raw_data:
                     raise ConnectionResetError
 
-
                 msg = raw_data.decode()
 
-
                 self.msg_handler(msg)
- 
 
-        except (ConnectionResetError, BrokenPipeError, socket.error):
+        except (OSError, ConnectionResetError, BrokenPipeError):
             print("Connection Error from host side!")
 
         except (json.JSONDecodeError, TypeError):
             print("Invalid msg. Could not format msg to JSON.")
 
-
         finally:
             print("Host lost")
             self.cleanup()
 
-
-
     def _send_to_server(self, msg):
         self.socket.sendall(msg.encode())
-
-
