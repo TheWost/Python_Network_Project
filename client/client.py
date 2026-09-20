@@ -151,13 +151,18 @@ class Client:
     def _send_to_server(self, msg):
         self.socket.sendall(msg.encode())
 
+    def start(self):
+        self.connect_host()
+        self.thread = threading.Thread(target=self.recive_msg)
+        self.thread.start()
+
 
 def main():
     """TESTINGS CONNECTION"""
     client = Client.load_from_config()
     client.connect_host()
     client.thread = threading.Thread(target=client.recive_msg)
-    client.thread.start()  # I just want to say how fucking stupid I am.
+    client.thread.start()
     while True:
         user = client.send_register("w123uftime2")
         print(user)

@@ -96,7 +96,7 @@ class Tui:
         # Same idea like in whisper. Just ask for command instead.
         pass
 
-    def run(self):
+    def start(self):
         while True:
             self.clear()
 
@@ -132,6 +132,7 @@ class Tui:
 
                 case "5":
                     break
+                    self.__client.cleanup()
 
                 case _:
                     self.__invalid_input()
