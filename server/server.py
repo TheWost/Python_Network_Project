@@ -159,7 +159,8 @@ class Server:
         else:
             msg = format_msg(msg_type="response", action="register", data=False)
 
-        client.send_msg(msg)
+        if isinstance(client, Client):
+            client.send_msg(msg)
 
     def _handle_whisper(self, address: str, msg):
         """Sends msg to choosen client"""
@@ -173,7 +174,8 @@ class Server:
             src=self.address_to_username(address),
         )
 
-        dst.send_msg(username)
+        if isinstance(dst, Client):
+            dst.send_msg(username)
 
     def _connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""
