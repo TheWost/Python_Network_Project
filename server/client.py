@@ -12,17 +12,23 @@ class Client:
 
     Holds values esseintal for client to recive and send packets."""
 
-    def __init__(self, client_socket, address, server):
+    def __init__(self, client_socket, address, port, server):
         self.__client_socket = client_socket
         self.address = address
+        self.port = port
         self.server = server
         self.thread: threading.Thread | None = None
 
     def cleanup(self):
-        """Removes itself from everywhere and deletes itself"""
-        self.server.clients.pop(self.address, 0)
+        """Removes itself from everywhere"""
+        username = self.server.address_to_username(self.address)
+
+        self.server.remove_client(self.address)
+
+        if username:
+            self.server.remove_user(username)
+
         self.__client_socket.close()
-        del self
 
     def msg_handler(self, address, msg):
         self.server.msg_handler(address, msg)
@@ -44,7 +50,7 @@ class Client:
                 data = json.loads(data)
                 self.msg_handler(self.address, data)
 
-        except (OSError, ConnectionResetError, BrokenPipeError):
+        except OSError, ConnectionResetError, BrokenPipeError:
             print(f"{self.address} got disconnected!")
         finally:
             self.cleanup()

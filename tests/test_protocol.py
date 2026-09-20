@@ -11,7 +11,7 @@ def parse(*args, **kwargs):
 
 def test_chat_whisper():
     assert parse(msg_type="chat", action="whisper", dst="kitty67", data="727") == {
-        "type": "chat",
+        "msg_type": "chat",
         "action": "whisper",
         "data": "727",
         "dst": "kitty67",
@@ -22,7 +22,7 @@ def test_chat_whisper():
 
 def test_query_get_usernames():
     assert parse(msg_type="query", action="get_usernames") == {
-        "type": "query",
+        "msg_type": "query",
         "action": "get_usernames",
         "data": "",
         "dst": "",
@@ -37,7 +37,7 @@ def test_response_get_usernames():
         action="get_usersnames",
         data=["kitty67", "puppy67"],
     ) == {
-        "type": "response",
+        "msg_type": "response",
         "action": "get_usersnames",
         "data": ["kitty67", "puppy67"],
         "dst": "",
@@ -48,7 +48,7 @@ def test_response_get_usernames():
 
 def test_response_register():
     assert parse(msg_type="response", action="register", data=False) == {
-        "type": "response",
+        "msg_type": "response",
         "action": "register",
         "data": False,
         "dst": "",

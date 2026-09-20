@@ -71,15 +71,14 @@ class Tui:
     def get_name(self):
         return self.__username
 
-    def group_chat(self):
-        return
-
     def _choose_client(self, clients_names):
         self.__print_out_list(*clients_names)
-        user_choice = self.__int_input(
-            len(clients_names)
-        )
+        user_choice = self.__int_input(len(clients_names))
         return clients_names[user_choice]
+
+    def group_chat(self):
+        user_msg = self._user_input()
+        self.__client.brodcast(user_msg)
 
     def whisper(self):
         clients = self.__client.get_usersnames()
@@ -104,7 +103,7 @@ class Tui:
             self._print_menu()
             user_choice = input("> ")
 
-            logged = True if self.__username else False
+            logged = bool(self.__username)
 
             match user_choice:
                 case "1":

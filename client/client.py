@@ -5,9 +5,10 @@ import socket
 import sys
 import threading
 from pathlib import Path
+from time import sleep
 
-from classes.exceptions import InvalidMsgAction, InvalidMsgType
-from classes.message import format_msg
+from classes.exceptions import InvalidMsgAction, InvalidMsgType, ServerDisconnection
+from classes.protocol import format_msg
 
 
 class Client:
@@ -21,19 +22,24 @@ class Client:
         self.socket = socket.socket(IPV, PROTOCOL)
         self.HOST = host
         self.PORT = port
-        self.thread = None
+        self.thread: threading.Thread | None = None
+        self.disconnected = threading.Event()
         self.action_map = {
-            "response": {"get_usernames": self._handle_response, "register": self._handle_response},
+            "response": {
+                "get_usernames": self._handle_response,
+                "register": self._handle_response,
+            },
             "chat": {"whisper": self._handle_whisper, "chat": self._handle_chat},
+            "warning": {"server_close": self._hadnle_server_close},
         }
 
         self.__temp_response = None
         self.__response_ready = threading.Event()
 
     @classmethod
-    def from_config(cls):
+    def load_from_config(cls):
         CONFIG_PATH = (
-            Path(__file__).resolve().parent.parent / "config" / "server_config.json"
+            Path(__file__).resolve().parent.parent / "configs" / "server_config.json"
         )
 
         with open(CONFIG_PATH) as f:
@@ -45,8 +51,8 @@ class Client:
         self.socket.connect((self.HOST, self.PORT))
 
     def cleanup(self):
+        self.disconnected.set()
         self.socket.close()
-        del self
         sys.exit(0)
 
     def _send_and_wait(self, msg):
@@ -67,7 +73,6 @@ class Client:
 
         return response
 
-
     def get_usernames(self):
         msg = format_msg(msg_type="query", action="get_usernames")
 
@@ -75,10 +80,23 @@ class Client:
 
         return response
 
+    def broadcast(self, data):
+        msg = format_msg(msg_type="chat", action="group", data=data)
+
+        self._send_to_server(msg)
+
     def send_whisper(self, data, dst):
         msg = format_msg(msg_type="chat", action="whisper", dst=dst, data=data)
-        
+
         self._send_to_server(msg)
+
+    def _hadnle_server_close(self, msg):
+        try:
+            raise ServerDisconnection(
+                f"Server has disconnected. Reason: {msg['reason']} {msg['data']}"
+            )
+        finally:
+            self.cleanup()
 
     def _handle_chat(self):
         return
@@ -87,7 +105,7 @@ class Client:
         print(f"{msg['src']} -> {msg['data']}")
 
     def _handle_response(self, msg):
-        self.__temp_response = msg
+        self.__temp_response = msg["data"]
         self.__response_ready.set()
 
     def msg_handler(self, msg):
@@ -108,7 +126,7 @@ class Client:
 
         bytes = 1024
         try:
-            while True:
+            while not self.disconnected.is_set():
                 raw_data = self.socket.recv(bytes)
 
                 if not raw_data:
@@ -116,12 +134,14 @@ class Client:
 
                 msg = raw_data.decode()
 
-                self.msg_handler(msg)
+                formated_msg = json.loads(msg)
 
-        except (OSError, ConnectionResetError, BrokenPipeError):
+                self.msg_handler(formated_msg)
+
+        except OSError, ConnectionResetError, BrokenPipeError:
             print("Connection Error from host side!")
 
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             print("Invalid msg. Could not format msg to JSON.")
 
         finally:
@@ -130,3 +150,21 @@ class Client:
 
     def _send_to_server(self, msg):
         self.socket.sendall(msg.encode())
+
+
+def main():
+    """TESTINGS CONNECTION"""
+    client = Client.load_from_config()
+    client.connect_host()
+    client.thread = threading.Thread(target=client.recive_msg)
+    client.thread.start()  # I just want to say how fucking stupid I am.
+    while True:
+        user = client.send_register("w123uftime2")
+        print(user)
+        users = client.get_usernames()
+        print(users)
+        sleep(20)
+
+
+if __name__ == "__main__":
+    main()

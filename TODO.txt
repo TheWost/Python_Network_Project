@@ -11,10 +11,10 @@ TUI TODO
     [X] Keep accepting messages
     [X] EXIT returns to main menu
 
-[ ] Whisper
-    [ ] Ask for target username
-    [ ] Ask for message
-    [ ] Return to main menu
+[X] Whisper
+    [x] Ask for target username
+    [x] Ask for message
+    [x] Return to main menu
 
 [ ] Remote Command
     [ ] Ask for command
@@ -24,7 +24,11 @@ TUI TODO
     [ ] Always leave using EXIT command.
 
 
-[ ] After TUI works: start designing message objectsI
+[x] After TUI works: start designing message objectsI
+
+
+
+REMEMBER TO UPDATE PYRPOJECT.TOML UV.LOCK AND PUT EVERYWHERE DOCS AND MAKE CODE AS CLEAN AS POSSIBLE
 
 
 
@@ -33,5 +37,5 @@ TUI TODO
 [X] let tui call client methods
 [X] Change client methods that were used to talk with server. And make one main command that sends msg to server
 [X] change msg dict to json string
-[ ] Server recives JSON. Use dumps on it to make it go back to normal
+[X] Server recives JSON. Use dumps on it to make it go back to normal
 
