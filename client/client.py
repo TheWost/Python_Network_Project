@@ -78,7 +78,7 @@ class Client:
 
         response = self._send_and_wait(msg)
 
-        return response
+        return response["data"]
 
     def broadcast(self, data):
         msg = format_msg(msg_type="chat", action="group", data=data)
@@ -105,7 +105,7 @@ class Client:
         print(f"{msg['src']} -> {msg['data']}")
 
     def _handle_response(self, msg):
-        self.__temp_response = msg["data"]
+        self.__temp_response = msg
         self.__response_ready.set()
 
     def msg_handler(self, msg):

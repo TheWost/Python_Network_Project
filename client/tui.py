@@ -2,21 +2,21 @@ import os
 
 from colorama import Fore, Style, init
 
-from configs.config import Config
+# from configs.config import Config
 
 init(autoreset=True)
 
 
 class Tui:
     def __init__(self, client):
-        self.__config = Config("tui_settings").load_data()
+        # self.__config = Config("tui_settings").load_data()
         self.__client = client
         self.__username = None
         self.login()
 
     def _print_menu(self):
         print(f"=== {self.__username if self.__username else 'GUEST'} ===")
-        print(f"1. {'log out' if self.__username else 'Log in}'}")
+        print(f"1. {'log out' if self.__username else 'Log in'}")
         print("2. Group Chat")
         print("3. Whisper")
         print("4. Remote command")
@@ -54,9 +54,11 @@ class Tui:
     def login(self):
         user_login = input("Enter your login: ")
 
-        response = self.__client.send_register(self.__username)
+        response = self.__client.send_register(user_login)
 
         valid = response["data"]
+        input(valid)
+        input(self.__client.get_usernames())
         if valid:
             self.__username = user_login
 
@@ -78,10 +80,10 @@ class Tui:
 
     def group_chat(self):
         user_msg = self._user_input()
-        self.__client.brodcast(user_msg)
+        self.__client.broadcast(user_msg)
 
     def whisper(self):
-        clients = self.__client.get_usersnames()
+        clients = self.__client.get_usernames()
 
         client = self._choose_client(clients)
 
