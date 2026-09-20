@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+
 def main():
     templates = Path(__file__).resolve().parent / "templates"
 
@@ -12,7 +13,3 @@ def main():
 
         with open(config_folder, "w") as f:
             json.dump(data, f)
-
-
-
-

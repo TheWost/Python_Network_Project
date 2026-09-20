@@ -76,7 +76,9 @@ class Client:
         return response
 
     def send_whisper(self, data, dst):
-        msg = format_msg(msg_type="chat", action="whisper", dst=dst)
+        msg = format_msg(msg_type="chat", action="whisper", dst=dst, data=data)
+        
+        self._send_to_server(msg)
 
     def _handle_chat(self):
         return

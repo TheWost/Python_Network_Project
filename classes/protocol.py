@@ -11,7 +11,7 @@ def format_msg(
     data: Any = "",
 ) -> str:
     """Formats an json object that represents msg between server and client"""
-    aviable_msg_types = ["command", "query", "chat"]
+    aviable_msg_types = ["command", "query", "chat", "response", "auth"]
 
     if not msg_type in aviable_msg_types:
         raise ValueError("Invalid msg type")
@@ -26,3 +26,20 @@ def format_msg(
             "reason": reason,
         }
     )
+
+
+def main():
+    msg = format_msg(msg_type="chat", action="whisper", dst="kitty67", data="727")
+    print(json.loads(msg))
+    msg = format_msg(msg_type="query", action="get_usernames")
+    print(json.loads(msg))
+    msg = format_msg(
+        msg_type="response", action="get_usersnames", data=["kitty67", "puppy67"]
+    )
+    print(json.loads(msg))
+    msg = format_msg(msg_type="response", action="register", data=False)
+    print(json.loads(msg))
+
+
+if __name__ == "__main__":
+    main()

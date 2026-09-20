@@ -18,11 +18,11 @@ class Server:
         self.__clients = {}  # Holds key:client_address value:client_socket
         self.__users = {}  # username -> Client
         self.action_map = {
-            "chat": {"whisper": self.whisper, "group": self.broadcast},
+            "chat": {"whisper": self._handle_whisper, "group": self._handle_broadcast},
             "query": {
-                "get_usersnames": self.get_all_clients  # For now it is clients. Once login will be implemeneted. It wil lbe users
+                "get_usersnames": self._handle_get_usernames  # For now it is clients. Once login will be implemeneted. It wil lbe users
             },
-            "auth": {"register": self.register},
+            "auth": {"register": self._handle_register},
         }
 
     def create_server(self, ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
@@ -38,6 +38,18 @@ class Server:
     def get_client(self, address):
         """Returns client wit that address"""
         return self.__clients[address]
+
+    def get_user(self, username):
+        """Returns client with that username"""
+        return self.__users[username]
+
+    def address_to_username(self, address: str) -> str:
+        client = self.get_client(address)
+
+        for username, user in self.__users.values():
+            if client == user:
+                return username
+        return ""
 
     def get_all_clients(self):
         """Returns list of all clients"""
@@ -71,6 +83,16 @@ class Server:
         for client in self.get_all_clients():
             client.send_msg(f"({src}) -> {data}".encode())
 
+    def _handle_broadcast(self, address, msg):
+        src = self.get_client(address)
+        data = msg["data"]
+        self.broadcast(src, data)
+
+    def _handle_get_usernames(self, address, msg):
+        msg = format_msg(msg_type="response", action="get_usersnames", data=self.__users)
+        client = self.get_client(address)
+        client.send_msg(msg)
+
     def msg_handler(self, address, msg):
         """Takes msg type and action and sends it to correct function"""
         actions = self.action_map.get(msg["msg_type"])
@@ -85,7 +107,7 @@ class Server:
 
         func(address, msg)
 
-    def register(self, address, msg):
+    def _handle_register(self, address, msg):
         username = msg["data"]
 
         client = self.get_client(address)
@@ -93,21 +115,22 @@ class Server:
         if username not in self.__users:
             self.__users[username] = client
 
-            msg = format_msg(msg_type = "response", action = "register", data="valid")
+            msg = format_msg(msg_type = "response", action = "register", data=True)
 
         else:
-            msg = format_msg(msg_type="response", action="register", data="invalid")
-
+            msg = format_msg(msg_type="response", action="register", data=False)
 
         client.send_msg(msg)
 
 
-
-
-    def whisper(self, address, msg):
+    def _handle_whisper(self, address: str, msg):
         """Sends msg to choosen client"""
+        username = msg["dst"]
+        dst = self.get_user(username)
 
-        return
+        msg = format_msg(msg_type="chat", action="whisper", data=msg["data"], src=self.address_to_username(address))
+
+        dst.send_msg(username)
 
     def connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""
