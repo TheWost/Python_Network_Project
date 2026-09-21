@@ -98,8 +98,8 @@ class Client:
         finally:
             self.cleanup()
 
-    def _handle_chat(self):
-        return
+    def _handle_chat(self, msg):
+        print(f"{msg['src']} -> {msg['data']}")
 
     def _handle_whisper(self, msg):
         print(f"{msg['src']} -> {msg['data']}")

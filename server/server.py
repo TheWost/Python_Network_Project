@@ -50,7 +50,7 @@ class Server:
 
     def append_clients(self, client):
         """Appends client to server client list"""
-        self.__clients_map[client.address] = client
+        self.__clients_map[client.key] = client
 
     def get_client(self, address) -> None | Client:
         """Returns client wit that address"""
@@ -69,13 +69,29 @@ class Server:
                     return username
         return ""
 
+    def _client_to_addres(self, client):
+        return client.address
+
+    def _user_to_username(self, user):
+        for username, user_object in self.__users_map.items():
+            if user == user_object:
+                return username
+
     def get_all_clients(self):
-        """Returns list of all clients"""
+        """Returns list of all clients objects from clients map"""
         return list(self.__clients_map.values())
+
+    def get_all_adrreses(self):
+        """Returns list of all addresses"""
+        return list(self.__clients_map.keys())
 
     def get_all_usernames(self):
         """Returns list of all usernames"""
         return list(self.__users_map.keys())
+
+    def get_all_users(self):
+        """Returns list of all clients objects from users map"""
+        return list(self.__users_map.values())
 
     def get_clients_count(self):
         """Returns total count of client connected to server"""
@@ -89,7 +105,7 @@ class Server:
         client_socket, (address, port) = self.server.accept()
 
         client = Client(client_socket, address, port, self)
-        print(f"{client.address} has connected!")
+        print(f"{client.key} has connected!")
 
         self.append_clients(client)
         return client
@@ -103,66 +119,67 @@ class Server:
         sleep(4)
         self.server.close()
 
-        for client in list(self.get_all_clients()):
+        for client in self.get_all_clients():
             client.cleanup()
 
-    def broadcast(self, msg):
-        """Sends msg to all clients"""
-        for client in self.get_all_clients():
-            client.send_msg(msg)
+        for user in self.get_all_users():  # Same thing as client, just diffreant list
+            user.cleanup()
 
-    def _handle_broadcast(self, address, msg):
-        src = self.address_to_username(address)
+    def broadcast(self, msg, not_including=None):
+        """Sends msg to all clients"""
+        if not not_including:
+            not_including = set()
+
+        for client in self.get_all_clients():
+            if client not in not_including:
+                client.send_msg(msg)
+
+    def _handle_broadcast(self, client: Client, msg):
+        src = client.username if client.username else client.address
+
         formated_msg = format_msg(
             msg_type="chat", action="group", src=src, data=msg["data"]
         )
-        self.broadcast(formated_msg)
 
-    def _handle_get_usernames(self, address, msg):
+        self.broadcast(formated_msg, not_including={client})
 
-        print(self.get_all_usernames())
+    def _handle_get_usernames(self, client: Client, msg):
+
         msg = format_msg(
             msg_type="response", action="get_usernames", data=self.get_all_usernames()
         )
-        client = self.get_client(address)
-        if client:
-            client.send_msg(msg)
-        else:
-            print(
-                f"[WARNING] Client at {address} disconnected before response could be sent."
-            )
 
-    def msg_handler(self, address, msg):
+        client.send_msg(msg)
+
+    def msg_handler(self, client, msg):
         """Takes msg type and action and sends it to correct function"""
         actions = self.action_map.get(msg["msg_type"])
 
         if not actions:
-            raise InvalidMsgType(f"Given msg type from {address} was invalid")
+            raise InvalidMsgType(f"Given msg type from {client} was invalid")
 
         func = actions.get(msg["action"])
 
         if not func:
-            raise InvalidMsgAction(f"Given msg action from {address} was invalid")
+            raise InvalidMsgAction(f"Given msg action from {client} was invalid")
 
-        func(address, msg)
+        func(client, msg)
 
-    def _handle_register(self, address, msg):
+    def _handle_register(self, client: Client, msg):
         username = msg["data"]
-
-        client = self.get_client(address)
 
         if username not in self.__users_map:
             self.__users_map[username] = client
+            client.username = username
 
             msg = format_msg(msg_type="response", action="register", data=True)
 
         else:
             msg = format_msg(msg_type="response", action="register", data=False)
 
-        if isinstance(client, Client):
-            client.send_msg(msg)
+        client.send_msg(msg)
 
-    def _handle_whisper(self, address: str, msg):
+    def _handle_whisper(self, client: Client, msg):
         """Sends msg to choosen client"""
         username = msg["dst"]
         dst = self.get_user(username)
@@ -171,7 +188,7 @@ class Server:
             msg_type="chat",
             action="whisper",
             data=msg["data"],
-            src=self.address_to_username(address),
+            src=client.username if client.username else client.address,
         )
 
         if isinstance(dst, Client):
@@ -187,10 +204,8 @@ class Server:
 
                 client.thread = threading.Thread(
                     target=client.recive_msg,
-                    name=f"Thread{client.address[0]}:{client.address[1]}",
+                    name=f"Thread{client.address}:{client.port}",
                 )
-
-                self.__clients_map[client.address] = client
 
                 client.thread.daemon = True
                 client.thread.start()

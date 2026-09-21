@@ -16,6 +16,8 @@ class Client:
         self.__client_socket = client_socket
         self.address = address
         self.port = port
+        self.username = None
+        self.key = (address, port)
         self.server = server
         self.thread: threading.Thread | None = None
 
@@ -47,8 +49,13 @@ class Client:
                     raise ConnectionResetError
 
                 data = raw_data.decode()
+
                 data = json.loads(data)
-                self.msg_handler(self.address, data)
+                print("\n\n")
+                print(data)
+                print("\n\n")
+
+                self.msg_handler(self, data)
 
         except OSError, ConnectionResetError, BrokenPipeError:
             print(f"{self.address} got disconnected!")

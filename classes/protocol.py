@@ -10,7 +10,10 @@ def format_msg(
     reason: str = "",
     data: Any = "",
 ) -> str:
-    """Formats an json object that represents msg between server and client"""
+    """Formats an json object that represents msg between server and client. Returns str
+    e.g. format_msg(msg_type="chat", action="group", src="127.0.0.1", data=True)  -> json.dumps("msg_type": "chat", "action": "group", "src": "127.0.0.1", "data": True)
+    Avaiable msg types = [command, query, chat, response, auth, warning]
+    """
     aviable_msg_types = ["command", "query", "chat", "response", "auth", "warning"]
 
     if not msg_type in aviable_msg_types:

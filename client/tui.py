@@ -49,6 +49,7 @@ class Tui:
 
     def _user_input(self):
         user_msg = input("> ")
+        print(user_msg)
         return user_msg
 
     def login(self):
@@ -57,7 +58,6 @@ class Tui:
         response = self.__client.send_register(user_login)
 
         valid = response["data"]
-        input(valid)
         input(self.__client.get_usernames())
         if valid:
             self.__username = user_login
@@ -80,6 +80,7 @@ class Tui:
 
     def group_chat(self):
         user_msg = self._user_input()
+        print(user_msg)
         self.__client.broadcast(user_msg)
 
     def whisper(self):
