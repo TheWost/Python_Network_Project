@@ -145,7 +145,7 @@ class Client:
             print("Invalid msg. Could not format msg to JSON.")
 
         finally:
-            print("Host lost")
+            input("Leaving reciving msg thread")
             self.cleanup()
 
     def _send_to_server(self, msg):

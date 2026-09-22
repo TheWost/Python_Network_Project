@@ -172,27 +172,26 @@ class Server:
             self.__users_map[username] = client
             client.username = username
 
-            msg = format_msg(msg_type="response", action="register", data=True)
+            formated_msg = format_msg(msg_type="response", action="register", data=True)
 
         else:
-            msg = format_msg(msg_type="response", action="register", data=False)
+            formated_msg = format_msg(
+                msg_type="response", action="register", data=False
+            )
 
-        client.send_msg(msg)
+        client.send_msg(formated_msg)
 
     def _handle_whisper(self, client: Client, msg):
         """Sends msg to choosen client"""
         username = msg["dst"]
         dst = self.get_user(username)
 
-        msg = format_msg(
-            msg_type="chat",
-            action="whisper",
-            data=msg["data"],
-            src=client.username if client.username else client.address,
+        formated_msg = format_msg(
+            msg_type="chat", action="whisper", data=msg["data"], src=client.username
         )
 
         if isinstance(dst, Client):
-            dst.send_msg(username)
+            dst.send_msg(formated_msg)
 
     def _connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""

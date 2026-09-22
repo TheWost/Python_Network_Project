@@ -31,11 +31,12 @@ class Tui:
     def _check_if_exit(self, user_msg):
         return user_msg.lower() == "exit"
 
-    def __int_input(self, length, prompt="> "):
+    def __int_input(self, length, offset=0, prompt="> "):
         try:
             user_choice = int(input(prompt))
 
             if 1 <= user_choice <= length:
+                user_choice -= offset
                 return user_choice
 
             self.__invalid_input()
@@ -75,7 +76,7 @@ class Tui:
 
     def _choose_client(self, clients_names):
         self.__print_out_list(*clients_names)
-        user_choice = self.__int_input(len(clients_names))
+        user_choice = self.__int_input(len(clients_names), offset=1)
         return clients_names[user_choice]
 
     def group_chat(self):
