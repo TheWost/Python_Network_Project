@@ -29,7 +29,7 @@ class Client:
                 "get_usernames": self._handle_response,
                 "register": self._handle_response,
             },
-            "chat": {"whisper": self._handle_whisper, "chat": self._handle_chat},
+            "chat": {"whisper": self._handle_whisper, "group": self._handle_chat},
             "warning": {"server_close": self._hadnle_server_close},
         }
 
