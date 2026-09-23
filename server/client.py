@@ -1,6 +1,7 @@
 """Client connection hadnler for socket communication."""
 
 import json
+import socket
 import threading
 
 
@@ -23,14 +24,24 @@ class Client:
 
     def cleanup(self):
         """Removes itself from everywhere"""
-        username = self.server.address_to_username(self.address)
 
-        self.server.remove_client(self.address)
+        print(self.key)
+        print(self.username)
 
-        if username:
-            self.server.remove_user(username)
+        print(self.server.get_client(self.key))
+        print(self.server.get_user(self.username))
 
-        self.__client_socket.close()
+        self.server.remove_client(self.key)
+
+        if self.username:
+            self.server.remove_user(self.username)
+
+        try:
+            self.__client_socket.shutdown(socket.SHUT_RDWR)  # RDWR means READ/WRITE
+        except OSError:
+            pass
+        finally:
+            self.__client_socket.close()
 
     def msg_handler(self, address, msg):
         self.server.msg_handler(address, msg)
@@ -59,5 +70,6 @@ class Client:
 
         except OSError, ConnectionResetError, BrokenPipeError:
             print(f"{self.address} got disconnected!")
+
         finally:
             self.cleanup()

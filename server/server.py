@@ -36,11 +36,11 @@ class Server:
 
         return cls(**settings)
 
-    def remove_client(self, address):
-        self.__clients_map.pop(address, None)
+    def remove_client(self, key):
+        self.__clients_map.pop(key)
 
     def remove_user(self, username):
-        self.__users_map.pop(username, None)
+        self.__users_map.pop(username)
 
     def create_server(self, ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
         """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP"""
@@ -52,9 +52,9 @@ class Server:
         """Appends client to server client list"""
         self.__clients_map[client.key] = client
 
-    def get_client(self, address) -> None | Client:
+    def get_client(self, key) -> None | Client:
         """Returns client wit that address"""
-        return self.__clients_map.get(address)
+        return self.__clients_map.get(key)
 
     def get_user(self, username):
         """Returns client with that username"""
@@ -69,19 +69,11 @@ class Server:
                     return username
         return ""
 
-    def _client_to_addres(self, client):
-        return client.address
-
-    def _user_to_username(self, user):
-        for username, user_object in self.__users_map.items():
-            if user == user_object:
-                return username
-
     def get_all_clients(self):
         """Returns list of all clients objects from clients map"""
         return list(self.__clients_map.values())
 
-    def get_all_adrreses(self):
+    def get_all_keys(self):
         """Returns list of all addresses"""
         return list(self.__clients_map.keys())
 
@@ -110,13 +102,10 @@ class Server:
         self.append_clients(client)
         return client
 
-    def cleanup(self):
+    def cleanup(self, reason="No reason"):
         """Closes up sockets and clients"""
-        msg = format_msg(
-            msg_type="warning", action="server_close", data="Server closed."
-        )
-        self.broadcast(msg)
-        sleep(4)
+
+        sleep(1)
         self.server.close()
 
         for client in self.get_all_clients():
@@ -124,6 +113,12 @@ class Server:
 
         for user in self.get_all_users():  # Same thing as client, just diffreant list
             user.cleanup()
+
+    def _send_not_registerted_warning(self, client):
+        formated_msg = format_msg(
+            msg_type="warning", action="not_registered", reason="Registration required"
+        )
+        client.send_msg(formated_msg)
 
     def broadcast(self, msg, not_including=None):
         """Sends msg to all clients"""
@@ -153,6 +148,10 @@ class Server:
 
     def msg_handler(self, client, msg):
         """Takes msg type and action and sends it to correct function"""
+        if msg["msg_type"] == "chat" and not client.username:
+            self._send_not_registerted_warning(client)
+            return
+
         actions = self.action_map.get(msg["msg_type"])
 
         if not actions:
@@ -166,9 +165,9 @@ class Server:
         func(client, msg)
 
     def _handle_register(self, client: Client, msg):
-        username = msg["data"]
+        username = msg["data"].strip()
 
-        if username not in self.__users_map:
+        if username not in self.__users_map and username:
             self.__users_map[username] = client
             client.username = username
 
@@ -211,9 +210,9 @@ class Server:
 
         except KeyboardInterrupt:
             print("KEYBAORD INTERRUPT CLOSING PROGRAM...")
+            self.cleanup(reason="Host did close the server.")
 
         finally:
-            self.cleanup()
             print("Program closed.")
 
     def start(self):

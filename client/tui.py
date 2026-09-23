@@ -26,23 +26,30 @@ class Tui:
         os.system("cls" if os.name == "nt" else "clear")
 
     def __invalid_input(self, prompt="Invalid answer"):
-        input(f"{Fore.RED}{Style.BRIGHT}{prompt}")
+        input(f"{Fore.RED}{Style.BRIGHT}{prompt}{Style.RESET_ALL}")
 
     def _check_if_exit(self, user_msg):
         return user_msg.lower() == "exit"
 
     def __int_input(self, length, offset=0, prompt="> "):
-        try:
-            user_choice = int(input(prompt))
+        while True:
+            try:
+                user_choice = input(prompt)
 
-            if 1 <= user_choice <= length:
-                user_choice -= offset
-                return user_choice
+                if self._check_if_exit(user_choice):
+                    print("ex")
+                    return
 
-            self.__invalid_input()
+                user_choice = int(user_choice)
 
-        except ValueError:
-            self.__invalid_input("Value must be an integer!")
+                if 1 <= user_choice <= length:
+                    user_choice -= offset
+                    return user_choice
+
+                self.__invalid_input()
+
+            except ValueError:
+                self.__invalid_input("Value must be an integer!")
 
     def __print_out_list(self, *items):
         for index, item in enumerate(items, start=1):
@@ -77,7 +84,9 @@ class Tui:
     def _choose_client(self, clients_names):
         self.__print_out_list(*clients_names)
         user_choice = self.__int_input(len(clients_names), offset=1)
-        return clients_names[user_choice]
+        if user_choice != None:
+            return clients_names[user_choice]
+        input("gnomed")
 
     def group_chat(self):
         user_msg = self._user_input()
@@ -88,6 +97,9 @@ class Tui:
         clients = self.__client.get_usernames()
 
         client = self._choose_client(clients)
+
+        if not client:
+            return
 
         user_msg = self._user_input()
 
@@ -101,11 +113,14 @@ class Tui:
         pass
 
     def start(self):
-        while True:
+        while not self.__client.disconnected.is_set():
             self.clear()
 
             self._print_menu()
             user_choice = input("> ")
+
+            if self.__client.disconnected.is_set():
+                return
 
             logged = bool(self.__username)
 
@@ -135,8 +150,8 @@ class Tui:
                         self.__invalid_input()
 
                 case "5":
-                    break
                     self.__client.cleanup()
+                    break
 
                 case _:
                     self.__invalid_input()

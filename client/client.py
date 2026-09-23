@@ -2,12 +2,11 @@
 
 import json
 import socket
-import sys
 import threading
 from pathlib import Path
 from time import sleep
 
-from classes.exceptions import InvalidMsgAction, InvalidMsgType, ServerDisconnection
+from classes.exceptions import InvalidMsgAction, InvalidMsgType
 from classes.protocol import format_msg
 
 
@@ -30,7 +29,10 @@ class Client:
                 "register": self._handle_response,
             },
             "chat": {"whisper": self._handle_whisper, "group": self._handle_chat},
-            "warning": {"server_close": self._hadnle_server_close},
+            "warning": {
+                "server_close": self._hadnle_server_close,
+                "not_registered": self._handle_warning,
+            },
         }
 
         self.__temp_response = None
@@ -52,8 +54,12 @@ class Client:
 
     def cleanup(self):
         self.disconnected.set()
-        self.socket.close()
-        sys.exit(0)
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        finally:
+            self.socket.close()
 
     def _send_and_wait(self, msg):
         self._send_to_server(msg)
@@ -91,12 +97,10 @@ class Client:
         self._send_to_server(msg)
 
     def _hadnle_server_close(self, msg):
-        try:
-            raise ServerDisconnection(
-                f"Server has disconnected. Reason: {msg['reason']} {msg['data']}"
-            )
-        finally:
-            self.cleanup()
+        return f"Server has disconnected. Reason: {msg['reason']} {msg['data']}"
+
+    def _handle_warning(self, msg):
+        return
 
     def _handle_chat(self, msg):
         print(f"{msg['src']} -> {msg['data']}")
@@ -145,7 +149,7 @@ class Client:
             print("Invalid msg. Could not format msg to JSON.")
 
         finally:
-            input("Leaving reciving msg thread")
+            print("Leaving reciving msg thread")
             self.cleanup()
 
     def _send_to_server(self, msg):

@@ -14,7 +14,14 @@ def format_msg(
     e.g. format_msg(msg_type="chat", action="group", src="127.0.0.1", data=True)  -> json.dumps("msg_type": "chat", "action": "group", "src": "127.0.0.1", "data": True)
     Avaiable msg types = [command, query, chat, response, auth, warning]
     """
-    aviable_msg_types = ["command", "query", "chat", "response", "auth", "warning"]
+    aviable_msg_types = [
+        "command",
+        "query",
+        "chat",
+        "response",
+        "auth",
+        "warning",
+    ]
 
     if not msg_type in aviable_msg_types:
         raise ValueError("Invalid msg type")
