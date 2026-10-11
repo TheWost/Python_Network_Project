@@ -122,12 +122,8 @@ class Server:
 
     def broadcast(self, msg, not_including=None):
         """Sends msg to all clients"""
-        if not not_including:
-            not_including = set()
-
         for client in self.get_all_clients():
-            if client not in not_including:
-                client.send_msg(msg)
+            client.send_msg(msg)
 
     def _handle_broadcast(self, client: Client, msg):
         src = client.username if client.username else client.address
