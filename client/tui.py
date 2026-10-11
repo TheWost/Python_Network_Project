@@ -14,7 +14,7 @@ class Tui:
         self.__client = client
         self.__username = None
 
-        self.prompt_session = PromptSession()
+        self.prompt_session = PromptSession(erase_when_done=True)
 
         self.login()
 
@@ -122,6 +122,7 @@ class Tui:
                     return
 
                 self.__client.broadcast(user_msg)
+
         finally:
             self.__client.on_message = None
 

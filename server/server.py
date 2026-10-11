@@ -19,6 +19,7 @@ class Server:
         self.host = host  # Holds...
         self.__clients_map = {}  #  client_address -> Client
         self.__users_map = {}  # username -> Client
+        self.echo_msgs = True
         self.action_map = {
             "chat": {"whisper": self._handle_whisper, "group": self._handle_broadcast},
             "query": {
@@ -104,7 +105,6 @@ class Server:
 
     def cleanup(self, reason="No reason"):
         """Closes up sockets and clients"""
-
         sleep(1)
         self.server.close()
 
@@ -123,7 +123,14 @@ class Server:
     def broadcast(self, msg, not_including=None):
         """Sends msg to all clients"""
         for client in self.get_all_clients():
-            client.send_msg(msg)
+            if self.echo_msgs or not not_including:
+                client.send_msg(msg)
+
+                continue
+
+            else:
+                if client not in not_including:
+                    client.send_msg(msg)
 
     def _handle_broadcast(self, client: Client, msg):
         src = client.username if client.username else client.address
@@ -135,7 +142,6 @@ class Server:
         self.broadcast(formated_msg, not_including={client})
 
     def _handle_get_usernames(self, client: Client, msg):
-
         msg = format_msg(
             msg_type="response", action="get_usernames", data=self.get_all_usernames()
         )

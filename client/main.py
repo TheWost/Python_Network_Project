@@ -7,7 +7,7 @@ from client.tui import Tui
 def main():
     client = Client.load_from_config()
 
-    with patch_stdout():
+    with patch_stdout(raw=True):
         client.start()
 
         tui = Tui(client)
