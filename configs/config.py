@@ -15,7 +15,7 @@ class Config:
                 f"Valid options: {', '.join(self.CONFIGS)}"
             )
 
-        self.configs_directory = Path(__file__).resolve().parent / "configs"
+        self.configs_directory = Path(__file__).resolve().parent
 
         if not self.configs_directory.exists():
             raise FileNotFoundError(

@@ -33,6 +33,7 @@ class Client:
             "response": {
                 "get_usernames": self._handle_response,
                 "register": self._handle_response,
+                "logout": self._handle_response,
             },
             "chat": {"whisper": self._handle_whisper, "group": self._handle_chat},
             "warning": {
@@ -75,6 +76,13 @@ class Client:
         response, self.__temp_response = self.__temp_response, None
 
         self.__response_ready.clear()
+
+        return response
+
+    def send_logout(self):
+        formated_msg = format_msg(msg_type="auth", action="logout")
+
+        response = self._send_and_wait(formated_msg)
 
         return response
 
@@ -139,19 +147,16 @@ class Client:
         func(msg)
 
     def recive_msg(self):
+        reader = self.socket.makefile("r", encoding="utf-8")
 
-        bytes = 1024
         try:
             while not self.disconnected.is_set():
-                raw_data = self.socket.recv(bytes)
+                raw_data = reader.readline()
 
                 if not raw_data:
                     raise ConnectionResetError
 
-                msg = raw_data.decode()
-
-                formated_msg = json.loads(msg)
-
+                formated_msg = json.loads(raw_data)
                 self.msg_handler(formated_msg)
 
         except OSError, ConnectionResetError, BrokenPipeError:
@@ -164,7 +169,8 @@ class Client:
             print("Leaving reciving msg thread")
             self.cleanup()
 
-    def _send_to_server(self, msg):
+    def _send_to_server(self, msg: str):
+        msg += "\n"  # Msg must end with \n to know whole msg has been sent
         self.socket.sendall(msg.encode())
 
     def start(self):

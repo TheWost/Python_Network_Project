@@ -38,7 +38,7 @@ class Tui:
     def __int_input(self, length, offset=0, prompt="> "):
         while True:
             try:
-                user_choice = input(prompt)
+                user_choice = self._user_input(prompt)
 
                 if self._check_if_exit(user_choice):
                     return
@@ -63,12 +63,12 @@ class Tui:
         return user_msg
 
     def login(self):
-        user_login = input("Enter your login: ")
+        user_login = self._user_input("Enter your login: ")
 
         response = self.__client.send_register(user_login)
 
         valid = response["data"]
-        input(self.__client.get_usernames())
+
         if valid:
             self.__username = user_login
 
@@ -77,20 +77,28 @@ class Tui:
                 self.__invalid_input(prompt=response["reason"])
 
     def logout(self):
-        self.__username = None
-        input("Sing out!")
+        if self.__client.send_logout():
+            self.__username = None
+            self._user_input("Sing out!")
+
+        else:
+            self.__invalid_input(prompt="Couldn't logout!")
 
     def get_name(self):
         return self.__username
 
     def _choose_client(self, clients_names):
         self.__print_out_list(*clients_names)
-        user_choice = self.__int_input(len(clients_names), offset=1)
+
+        user_choice = self.__int_input(
+            len(clients_names), prompt="(/exit to leave) >", offset=1
+        )
+
         if user_choice != None:
             return clients_names[user_choice]
-        input("gnomed")
 
     def _print_whisper(self, msg):
+        print("[" + Fore.MAGENTA + "PRIVATE" + Style.RESET_ALL + "]", end=" ")
         print(Fore.MAGENTA + msg["src"] + Style.RESET_ALL + ": " + msg["data"])
 
     def _print_msg_with_name(self, msg):
@@ -116,7 +124,7 @@ class Tui:
 
         try:
             while True:
-                user_msg = self._user_input("(/exit to leave)    > ")
+                user_msg = self._user_input("(/exit to leave) > ")
 
                 if self._check_if_exit(user_msg):
                     return

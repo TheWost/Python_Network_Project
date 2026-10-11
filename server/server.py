@@ -25,7 +25,7 @@ class Server:
             "query": {
                 "get_usernames": self._handle_get_usernames  # For now it is clients. Once login will be implemeneted. It wil lbe users
             },
-            "auth": {"register": self._handle_register},
+            "auth": {"register": self._handle_register, "logout": self._handle_logout},
         }
 
     @classmethod
@@ -38,10 +38,10 @@ class Server:
         return cls(**settings)
 
     def remove_client(self, key):
-        self.__clients_map.pop(key)
+        return self.__clients_map.pop(key, 0)
 
     def remove_user(self, username):
-        self.__users_map.pop(username)
+        return self.__users_map.pop(username, 0)
 
     def create_server(self, ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
         """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP"""
@@ -111,9 +111,6 @@ class Server:
         for client in self.get_all_clients():
             client.cleanup()
 
-        for user in self.get_all_users():  # Same thing as client, just diffreant list
-            user.cleanup()
-
     def _send_not_registerted_warning(self, client):
         formated_msg = format_msg(
             msg_type="warning", action="not_registered", reason="Registration required"
@@ -169,6 +166,9 @@ class Server:
     def _handle_register(self, client: Client, msg):
         username = msg["data"].strip()
 
+        if client.username:
+            return
+
         if username not in self.__users_map and username:
             self.__users_map[username] = client
             client.username = username
@@ -179,6 +179,21 @@ class Server:
             formated_msg = format_msg(
                 msg_type="response", action="register", data=False
             )
+
+        client.send_msg(formated_msg)
+
+    def _handle_logout(self, client, msg):
+        if not client.username:
+            formated_msg = format_msg(msg_type="response", action="logout", data=False)
+
+            client.send_msg(formated_msg)
+
+            return
+
+        self.remove_user(client.username)
+        client.username = None
+
+        formated_msg = format_msg(msg_type="response", action="logout", data=True)
 
         client.send_msg(formated_msg)
 
@@ -196,14 +211,14 @@ class Server:
             action="whisper",
             data=msg["data"],
             src=client.username,
-            dst=msg["dst"],
+            dst=username,
         )
 
         if isinstance(dst, Client):
             dst.send_msg(formated_msg)
 
         # Echoing back
-        if username == client.username or not self.echo_msgs:
+        if username == client.username or not self.echo_msgs or not dst:
             return
 
         client.send_msg(formated_msg)

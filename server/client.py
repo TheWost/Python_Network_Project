@@ -46,25 +46,23 @@ class Client:
     def msg_handler(self, address, msg):
         self.server.msg_handler(address, msg)
 
-    def send_msg(self, data):
+    def send_msg(self, data: str):
+        data += "\n"  # With this msg must end to know whole msg has been sent.
         self.__client_socket.sendall(data.encode())
 
     def recive_msg(self):
         """Lisitens for msg from it's connected socket"""
-        bytes = 1024
+        reader = self.__client_socket.makefile("r", encoding="utf-8")
+
         try:
             while True:
-                raw_data = self.__client_socket.recv(bytes)
+                raw_data = reader.readline()
 
                 if not raw_data:
                     raise ConnectionResetError
 
-                data = raw_data.decode()
-
-                data = json.loads(data)
-                print("\n\n")
+                data = json.loads(raw_data)
                 print(data)
-                print("\n\n")
 
                 self.msg_handler(self, data)
 
