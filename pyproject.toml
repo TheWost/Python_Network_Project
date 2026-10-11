@@ -7,7 +7,10 @@ authors = [
     { name = "TheWost", email = "urbanskifilip63@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "colorama>=0.4.6",
+    "prompt-toolkit>=3.0.53",
+]
 
 [project.scripts]
 network-project = "network_project:main"

@@ -1,6 +1,7 @@
 import os
 
 from colorama import Fore, Style, init
+from prompt_toolkit import PromptSession
 
 # from configs.config import Config
 
@@ -12,6 +13,9 @@ class Tui:
         # self.__config = Config("tui_settings").load_data()
         self.__client = client
         self.__username = None
+
+        self.prompt_session = PromptSession()
+
         self.login()
 
     def _print_menu(self):
@@ -55,9 +59,8 @@ class Tui:
         for index, item in enumerate(items, start=1):
             print(f"{index}. {item}")
 
-    def _user_input(self):
-        user_msg = input("> ")
-        print(user_msg)
+    def _user_input(self, prompt="> "):
+        user_msg = self.prompt_session.prompt(prompt)
         return user_msg
 
     def login(self):
@@ -90,7 +93,6 @@ class Tui:
 
     def group_chat(self):
         user_msg = self._user_input()
-        print(user_msg)
         self.__client.broadcast(user_msg)
 
     def whisper(self):
@@ -117,7 +119,7 @@ class Tui:
             self.clear()
 
             self._print_menu()
-            user_choice = input("> ")
+            user_choice = self._user_input()
 
             if self.__client.disconnected.is_set():
                 return
