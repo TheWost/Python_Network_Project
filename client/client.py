@@ -117,6 +117,9 @@ class Client:
     def _handle_whisper(self, msg):
         self.chat_history.append(msg)
 
+        if callable(self.on_message):
+            self.on_message(msg)
+
     def _handle_response(self, msg):
         self.__temp_response = msg
         self.__response_ready.set()

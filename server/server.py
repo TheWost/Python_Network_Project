@@ -183,16 +183,30 @@ class Server:
         client.send_msg(formated_msg)
 
     def _handle_whisper(self, client: Client, msg):
-        """Sends msg to choosen client"""
+        """Sends msg to choosen client and echos it back to sender"""
         username = msg["dst"]
         dst = self.get_user(username)
 
+        assert client.username is not None, (
+            "For debbugin: Someone who was not logged in sent whisper"
+        )
+
         formated_msg = format_msg(
-            msg_type="chat", action="whisper", data=msg["data"], src=client.username
+            msg_type="chat",
+            action="whisper",
+            data=msg["data"],
+            src=client.username,
+            dst=msg["dst"],
         )
 
         if isinstance(dst, Client):
             dst.send_msg(formated_msg)
+
+        # Echoing back
+        if username == client.username or not self.echo_msgs:
+            return
+
+        client.send_msg(formated_msg)
 
     def _connection_loop(self):
         """On loop lisitens for connections and recives/send msgs to everyone"""
