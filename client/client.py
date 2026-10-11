@@ -22,7 +22,13 @@ class Client:
         self.HOST = host
         self.PORT = port
         self.thread: threading.Thread | None = None
+
         self.disconnected = threading.Event()
+
+        self.chat_history = []
+
+        self.on_message = None
+
         self.action_map = {
             "response": {
                 "get_usernames": self._handle_response,
@@ -103,10 +109,13 @@ class Client:
         return
 
     def _handle_chat(self, msg):
-        print(f"{msg['src']} -> {msg['data']}")
+        self.chat_history.append(msg)
+
+        if callable(self.on_message):
+            self.on_message(msg)
 
     def _handle_whisper(self, msg):
-        print(f"{msg['src']} -> {msg['data']}")
+        self.chat_history.append(msg)
 
     def _handle_response(self, msg):
         self.__temp_response = msg

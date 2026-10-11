@@ -33,7 +33,7 @@ class Tui:
         input(f"{Fore.RED}{Style.BRIGHT}{prompt}{Style.RESET_ALL}")
 
     def _check_if_exit(self, user_msg):
-        return user_msg.lower() == "exit"
+        return user_msg.lower() == "/exit"
 
     def __int_input(self, length, offset=0, prompt="> "):
         while True:
@@ -41,7 +41,6 @@ class Tui:
                 user_choice = input(prompt)
 
                 if self._check_if_exit(user_choice):
-                    print("ex")
                     return
 
                 user_choice = int(user_choice)
@@ -91,11 +90,44 @@ class Tui:
             return clients_names[user_choice]
         input("gnomed")
 
+    def _print_whisper(self, msg):
+        print(Fore.MAGENTA + msg["src"] + Style.RESET_ALL + ": " + msg["data"])
+
+    def _print_msg_with_name(self, msg):
+        print(Fore.YELLOW + msg["src"] + ": " + msg["data"] + Style.RESET_ALL)
+
+    def _print_msg(self, msg):
+        if msg["action"] == "whisper":
+            self._print_whisper(msg)
+
+        elif self.__username in msg["data"]:
+            self._print_msg_with_name(msg)
+
+        else:
+            print(msg["src"] + ": " + msg["data"])
+
     def group_chat(self):
-        user_msg = self._user_input()
-        self.__client.broadcast(user_msg)
+        self.clear()
+
+        for msg in self.__client.chat_history:
+            self._print_msg(msg)
+
+        self.__client.on_message = self._print_msg
+
+        try:
+            while True:
+                user_msg = self._user_input("(/exit to leave)    > ")
+
+                if self._check_if_exit(user_msg):
+                    return
+
+                self.__client.broadcast(user_msg)
+        finally:
+            self.__client.on_message = None
 
     def whisper(self):
+        self.clear()
+
         clients = self.__client.get_usernames()
 
         client = self._choose_client(clients)
