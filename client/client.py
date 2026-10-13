@@ -171,7 +171,10 @@ class Client:
 
     def _send_to_server(self, msg: str):
         msg += "\n"  # Msg must end with \n to know whole msg has been sent
-        self.socket.sendall(msg.encode())
+        try:
+            self.socket.sendall(msg.encode())
+        except OSError:
+            print("Host disconnected. If you are inside input please type /exit")
 
     def start(self):
         self.connect_host()
