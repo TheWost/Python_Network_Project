@@ -1,3 +1,5 @@
+import sys
+
 from prompt_toolkit.patch_stdout import patch_stdout
 
 from client.client import Client
@@ -8,7 +10,12 @@ def main():
     client = Client.load_from_config()
 
     with patch_stdout(raw=True):
-        client.start()
+        try:
+            client.start()
+        except ConnectionRefusedError:
+            print("Couldn't connect to host!", file=sys.stderr)
+            input()
+            return
 
         tui = Tui(client)
         tui.start()

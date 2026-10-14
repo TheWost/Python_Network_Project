@@ -2,6 +2,7 @@
 
 import json
 import socket
+import sys
 import threading
 from pathlib import Path
 from time import sleep
@@ -57,7 +58,11 @@ class Client:
         return cls(**server_config)
 
     def connect_host(self):
-        self.socket.connect((self.HOST, self.PORT))
+        try:
+            self.socket.connect((self.HOST, self.PORT))
+        except OSError as e:
+            print(f"Connection failed: {e}", file=sys.stderr)
+            raise
 
     def cleanup(self):
         self.disconnected.set()
@@ -160,13 +165,13 @@ class Client:
                 self.msg_handler(formated_msg)
 
         except OSError, ConnectionResetError, BrokenPipeError:
-            print("Connection Error from host side!")
+            print("Connection Error from host side!", file=sys.stderr)
 
         except json.JSONDecodeError, TypeError:
-            print("Invalid msg. Could not format msg to JSON.")
+            print("Invalid msg. Could not format msg to JSON.", file=sys.stderr)
 
         finally:
-            print("Leaving reciving msg thread")
+            print("Leaving reciving msg thread", file=sys.stderr)
             self.cleanup()
 
     def _send_to_server(self, msg: str):
@@ -174,7 +179,10 @@ class Client:
         try:
             self.socket.sendall(msg.encode())
         except OSError:
-            print("Host disconnected. If you are inside input please type /exit")
+            print(
+                "Host disconnected. If you are inside input please type /exit",
+                file=sys.stderr,
+            )
 
     def start(self):
         self.connect_host()
