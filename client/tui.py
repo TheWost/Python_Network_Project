@@ -3,13 +3,19 @@ import os
 from colorama import Fore, Style, init
 from prompt_toolkit import PromptSession
 
+from client.client import Client
 # from configs.config import Config
 
 init(autoreset=True)
 
 
 class Tui:
-    def __init__(self, client):
+    def __init__(self, client: Client):
+        """Initilize the TUI and starts loggin process
+
+        Args:
+            client (Client): Client insteance.
+        """
         # self.__config = Config("tui_settings").load_data()
         self.__client = client
         self.__username = None
@@ -19,6 +25,7 @@ class Tui:
         self.login()
 
     def _print_menu(self):
+        """Displays navigation menu in terminal"""
         print(f"=== {self.__username if self.__username else 'GUEST'} ===")
         print(f"1. {'log out' if self.__username else 'Log in'}")
         print("2. Group Chat")
@@ -27,15 +34,41 @@ class Tui:
         print("5. exit")
 
     def clear(self):
+        """Clears terminal"""
         os.system("cls" if os.name == "nt" else "clear")
 
-    def __invalid_input(self, prompt="Invalid answer"):
+    def __invalid_input(self, prompt: str = "Invalid answer"):
+        """Displays an error msg and waits for user input
+
+        args:
+            prompt (str) : Displays error msg and waits for user input
+        """
         input(f"{Fore.RED}{Style.BRIGHT}{prompt}{Style.RESET_ALL}")
 
-    def _check_if_exit(self, user_msg):
+    def _check_if_exit(self, user_msg: str) -> bool:
+        """Checks if input is equal to /exit
+
+        args:
+            user_msg (str): input to compare
+
+        returns:
+            True if input is /exit else False
+        """
         return user_msg.lower() == "/exit"
 
-    def __int_input(self, length, offset=0, prompt="> "):
+    def __int_input(
+        self, length: int, offset: int = 0, prompt: str = "> "
+    ) -> int | None:
+        """Askes user for int input in range of 1-lenght. Returns None if user types /exit
+
+        Args:
+            lenght (int): Range that it will be compered to.
+            offset (int): Number that will move backwards result by that amount
+            propmt (str): Prompt that will be displayed while asking for input.
+
+        returns:
+            None if user types /exit else user_choosen number
+        """
         while True:
             try:
                 user_choice = self._user_input(prompt)
@@ -55,14 +88,29 @@ class Tui:
                 self.__invalid_input("Value must be an integer!")
 
     def __print_out_list(self, *items):
+        """Goes over items and prints them out with index=1 at start.
+
+        Args:
+            *items: Items that will get printed
+        """
+
         for index, item in enumerate(items, start=1):
             print(f"{index}. {item}")
 
-    def _user_input(self, prompt="> "):
+    def _user_input(self, prompt="> ") -> str:
+        """Asks user for input using prompt_session.prompt and retuns value.
+
+        Args:
+            prompt='> ' (str): Prompt that will be displayed while asking user for input.
+
+        Returns:
+            user input
+        """
         user_msg = self.prompt_session.prompt(prompt)
         return user_msg
 
     def login(self):
+        """Asks user for login name and sends to server. if successfull then sets it as sef.__username"""
         user_login = self._user_input("Enter your login: ")
 
         response = self.__client.send_register(user_login)
@@ -77,6 +125,7 @@ class Tui:
                 self.__invalid_input(prompt=response["reason"])
 
     def logout(self):
+        """Sends server information about logout and if successfull sets 'self.__username' to None"""
         if self.__client.send_logout():
             self.__username = None
             self._user_input("Sing out!")
@@ -84,10 +133,23 @@ class Tui:
         else:
             self.__invalid_input(prompt="Couldn't logout!")
 
-    def get_name(self):
+    def get_name(self) -> str | None:
+        """Returns currently logged in user name
+
+        Returns:
+            The username if user is logged in else 'None'
+        """
         return self.__username
 
-    def _choose_client(self, clients_names):
+    def _choose_client(self, clients_names) -> str | None:
+        """Prints out client names and asks user to choose client index.
+
+        Args:
+            client_names (list["str"]): List containing clients names
+
+        Returns:
+            user choosen client if user chooses one else None
+        """
         self.__print_out_list(*clients_names)
 
         user_choice = self.__int_input(
@@ -97,14 +159,29 @@ class Tui:
         if user_choice != None:
             return clients_names[user_choice]
 
-    def _print_whisper(self, msg):
+    def _print_whisper(self, msg: dict):
+        """Prints msg and it's source with [PRIAVTE] at start with magenta color
+
+        Args:
+            msg (dict): Msg from classes.protocol
+        """
         print("[" + Fore.MAGENTA + "PRIVATE" + Style.RESET_ALL + "]", end=" ")
         print(Fore.MAGENTA + msg["src"] + Style.RESET_ALL + ": " + msg["data"])
 
     def _print_msg_with_name(self, msg):
+        """Prints msg and it's source with yellow color
+
+        Args:
+            msg (dict): Msg from classes.protocol
+        """
         print(Fore.YELLOW + msg["src"] + ": " + msg["data"] + Style.RESET_ALL)
 
     def _print_msg(self, msg):
+        """Takes msg and parses it to find correct way to print it
+
+        Args:
+            msg (dict): Msg from classes.protocol
+        """
         if msg["action"] == "whisper":
             self._print_whisper(msg)
 

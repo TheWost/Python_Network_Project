@@ -19,6 +19,14 @@ class Client:
     Holds values esseintal for client to recive and send packets."""
 
     def __init__(self, port, host, IPV=socket.AF_INET, PROTOCOL=socket.SOCK_STREAM):
+        """Initializes a Client instance.
+
+        Args:
+            port (int): The server port to connect to.
+            host (str): The server hostname or IP address.
+            IPV (int, optional): Address family. Defaults to ``socket.AF_INET``.
+            PROTOCOL (int, optional): Socket type. Defaults to ``socket.SOCK_STREAM``.
+        """
         self.socket = socket.socket(IPV, PROTOCOL)
         self.HOST = host
         self.PORT = port
@@ -47,7 +55,15 @@ class Client:
         self.__response_ready = threading.Event()
 
     @classmethod
-    def load_from_config(cls):
+    def load_from_config(cls) -> Client:
+        """Creates a Client from the project's server configuration file.
+
+        Reads ``configs/server_config.json`` relative to the project root and
+        instantiates ``cls`` using the values under the ``"client"`` key.
+
+        Returns:
+            Client: A new client instance configured from the JSON file.
+        """
         CONFIG_PATH = (
             Path(__file__).resolve().parent.parent / "configs" / "server_config.json"
         )
@@ -58,6 +74,11 @@ class Client:
         return cls(**server_config)
 
     def connect_host(self):
+        """Connects the client socket to the configured host and port.
+
+        Raises:
+            OSError: If the connection attempt fails.
+        """
         try:
             self.socket.connect((self.HOST, self.PORT))
         except OSError as e:
@@ -65,6 +86,11 @@ class Client:
             raise
 
     def cleanup(self):
+        """Marks the client as disconnected and closes the underlying socket.
+
+        The socket shutdown is attempted gracefully; any ``OSError`` raised
+        during shutdown is ignored, and the socket is always closed.
+        """
         self.disconnected.set()
         try:
             self.socket.shutdown(socket.SHUT_RDWR)
@@ -73,7 +99,15 @@ class Client:
         finally:
             self.socket.close()
 
-    def _send_and_wait(self, msg):
+    def _send_and_wait(self, msg) -> dict | None:
+        """Sends a message and blocks until the matching response arrives.
+
+        Args:
+            msg (str): The formatted message to send to the server.
+
+        Returns:
+            dict: The response message received from the server.
+        """
         self._send_to_server(msg)
 
         self.__response_ready.wait()
