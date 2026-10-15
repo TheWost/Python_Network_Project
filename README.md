@@ -40,24 +40,22 @@ python -m pip install .
 2. Now you'd have to configure
 
 #### If you are server
-
-- Set configuration in server_config to your liking inside server object.
-  - `0.0.0.0` so everyone can connect
-  - `127.0.0.1` so everyone from your computer can connect
+  - Set configuration in `server_config.json` to your liking inside server object.
+    - `0.0.0.0` so everyone can connect
+    - `127.0.0.1` so everyone from your computer can connect
 
 #### If you are client
+  - Inside your `server_config.json` put in client `host: Your server IPV4`
 
-- Inside your `server_config.json` put in client `host: Your server IPV4`
-
-1. Then choose whoever you want to be
+3. Then choose whoever you want to be and done!
 
 ### Old method
 
 #### If you are server
 
-1. Set configuration in server_config to your liking inside server object.
-    - `0.0.0.0` so everyone can connect
-    - `127.0.0.1` so everyone from your computer can connect
+1. Set configuration in `server_config.json` to your liking inside server object.
+      - `0.0.0.0` so everyone can connect
+      - `127.0.0.1` so everyone from your computer can connect
 
 2. On machine you want to host server in terminal run:
 
@@ -76,6 +74,6 @@ python -m server.main
 python -m client.main
 ```
 
-1. Done! you are connected to that server
+3. Done! you are connected to that server
 
 This is my first repo. So please don't be mean
