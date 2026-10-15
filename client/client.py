@@ -99,7 +99,7 @@ class Client:
         finally:
             self.socket.close()
 
-    def _send_and_wait(self, msg) -> dict | None:
+    def _send_and_wait(self, msg: str) -> dict:
         """Sends a message and blocks until the matching response arrives.
 
         Args:
@@ -116,63 +116,136 @@ class Client:
 
         self.__response_ready.clear()
 
+        if not isinstance(response, dict):
+            raise TypeError(f"Exprected dict, got {type(response).__name__}")
         return response
 
-    def send_logout(self):
+    def send_logout(self) -> dict:
+        """Sends a logout request to the server and waits for the response.
+
+        Returns:
+            dict: The server's response to the logout request.
+        """
         formated_msg = format_msg(msg_type="auth", action="logout")
 
         response = self._send_and_wait(formated_msg)
 
         return response
 
-    def send_register(self, username):
+    def send_register(self, username: str) -> dict:
+        """Registers the given username with the server.
+
+        Args:
+            username (str): The username to register.
+
+        Returns:
+            dict: The server's response to the registration request.
+        """
         msg = format_msg(msg_type="auth", action="register", data=username)
 
         response = self._send_and_wait(msg)
 
         return response
 
-    def get_usernames(self):
+    def get_usernames(self) -> list:
+        """Requests the list of currently registered usernames.
+
+        Returns:
+            list: The ``data`` field of the server's response.
+        """
         msg = format_msg(msg_type="query", action="get_usernames")
 
         response = self._send_and_wait(msg)
 
         return response["data"]
 
-    def broadcast(self, data):
+    def broadcast(self, data: str):
+        """Sends a group chat message to the server (fire-and-forget).
+
+        Args:
+            data (str): The message body to broadcast.
+        """
         msg = format_msg(msg_type="chat", action="group", data=data)
 
         self._send_to_server(msg)
 
-    def send_whisper(self, data, dst):
+    def send_whisper(self, data: str, dst: str):
+        """Sends a private (whisper) message to a specific user.
+
+        Args:
+            data (str): The message body to send.
+            dst (str): The destination username.
+        """
         msg = format_msg(msg_type="chat", action="whisper", dst=dst, data=data)
 
         self._send_to_server(msg)
 
-    def _hadnle_server_close(self, msg):
+    def _hadnle_server_close(self, msg: dict) -> str:
+        """Handles a server-close warning message.
+
+        Args:
+            msg (dict): The warning message; expected to contain ``reason`` and ``data``.
+
+        Returns:
+            str: A human-readable description of the server shutdown.
+        """
         return f"Server has disconnected. Reason: {msg['reason']} {msg['data']}"
 
-    def _handle_warning(self, msg):
+    def _handle_warning(self, msg: dict):
+        """Handles generic warning messages.
+
+        Currently a no-op placeholder.
+
+        Args:
+            msg (dict): The warning message.
+        """
         return
 
-    def _handle_chat(self, msg):
+    def _handle_chat(self, msg: dict):
+        """Handles an incoming group chat message.
+
+        Appends the message to ``chat_history`` and invokes ``on_message`` if set.
+
+        Args:
+            msg (dict): The chat message.
+        """
         self.chat_history.append(msg)
 
         if callable(self.on_message):
             self.on_message(msg)
 
-    def _handle_whisper(self, msg):
+    def _handle_whisper(self, msg: dict):
+        """Handles an incoming whisper (private) message.
+
+        Appends the message to ``chat_history`` and invokes ``on_message`` if set.
+
+        Args:
+            msg (dict): The whisper message.
+        """
         self.chat_history.append(msg)
 
         if callable(self.on_message):
             self.on_message(msg)
 
-    def _handle_response(self, msg):
+    def _handle_response(self, msg: dict):
+        """Handles a server response by storing it and unblocking waiters.
+
+        Args:
+            msg (dict): The response message.
+        """
         self.__temp_response = msg
         self.__response_ready.set()
 
-    def msg_handler(self, msg):
+    def msg_handler(self, msg: dict):
+        """Dispatches an incoming message to the appropriate handler.
 
+        Args:
+            msg (dict): The decoded message. Must contain ``msg_type`` and ``action``.
+
+        Raises:
+            InvalidMsgType: If ``msg['msg_type']`` is not present in ``action_map``.
+            InvalidMsgAction: If ``msg['action']`` is not valid for the given type.
+        """
         actions = self.action_map.get(msg["msg_type"])
 
         if not actions:
@@ -186,6 +259,12 @@ class Client:
         func(msg)
 
     def recive_msg(self):
+        """Receives and processes messages from the server until disconnect.
+
+        Runs in a loop reading newline-delimited JSON messages from the socket
+        and dispatching them via ``msg_handler``. Handles connection-related
+        errors and always calls ``cleanup`` on exit.
+        """
         reader = self.socket.makefile("r", encoding="utf-8")
 
         try:
@@ -209,6 +288,11 @@ class Client:
             self.cleanup()
 
     def _send_to_server(self, msg: str):
+        """Sends a newline-terminated message to the server.
+
+        Args:
+            msg (str): The message to send. A trailing ``\\n`` is appended.
+        """
         msg += "\n"  # Msg must end with \n to know whole msg has been sent
         try:
             self.socket.sendall(msg.encode())
@@ -219,6 +303,7 @@ class Client:
             )
 
     def start(self):
+        """Connects to the server and starts the background receive thread."""
         self.connect_host()
         self.thread = threading.Thread(target=self.recive_msg)
         self.thread.start()
