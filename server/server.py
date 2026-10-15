@@ -12,9 +12,25 @@ from server.client import Client
 
 
 class Server:
-    """Class creates a socket that local machines can connect to and send msgs to"""
+    """Class creates a socket that local machines can connect to and send msgs to.
 
-    def __init__(self, host="0.0.0.0", port=8000):
+    Attributes:
+        port (int): The port the server socket binds to.
+        host (str): The host/interface the server socket binds to.
+        echo_msgs (bool): Whether broadcast messages are echoed back to the sender.
+        action_map (dict): Mapping of ``msg_type`` -> ``action`` -> handler method.
+        server (socket.socket): The listening socket, created by ``create_server``.
+        __clients_map (dict): Maps client key (address) -> :class:`Client`.
+        __users_map (dict): Maps username -> :class:`Client`.
+    """
+
+    def __init__(self, host: str = "0.0.0.0", port: int = 8000) -> None:
+        """Initializes a Server instance.
+
+        Args:
+            host (str, optional): Host/interface to bind to. Defaults to ``"0.0.0.0"``.
+            port (int, optional): Port to bind to. Defaults to ``8000``.
+        """
         self.port = port  # Holds to which PORT socket will be connected to
         self.host = host  # Holds...
         self.__clients_map = {}  #  client_address -> Client
@@ -29,7 +45,15 @@ class Server:
         }
 
     @classmethod
-    def load_from_config(cls):
+    def load_from_config(cls) -> Server:
+        """Creates a Server from the project's server configuration file.
+
+        Reads ``configs/server_config.json`` relative to the project root and
+        instantiates ``cls`` using the values under the ``"server"`` key.
+
+        Returns:
+            Server: A new server instance configured from the JSON file.
+        """
         CONFIG_PATH = Path(__file__).parent.parent / "configs" / "server_config.json"
 
         with open(CONFIG_PATH, "r") as f:
@@ -37,31 +61,80 @@ class Server:
 
         return cls(**settings)
 
-    def remove_client(self, key):
+    def remove_client(self, key: str) -> Client | int:
+        """Removes a user from the users map.
+
+        Args:
+            username (str): The username to remove.
+
+        Returns:
+            Client | int: The removed :class:`Client`, or ``0`` if not found.
+        """
         return self.__clients_map.pop(key, 0)
 
-    def remove_user(self, username):
+    def remove_user(self, username: str) -> Client | int:
+        """Removes a user from the users map.
+
+        Args:
+            username (str): The username to remove.
+
+        Returns:
+            Client | int: The removed :class:`Client`, or ``0`` if not found.
+        """
         return self.__users_map.pop(username, 0)
 
-    def create_server(self, ipv=socket.AF_INET, protocol=socket.SOCK_STREAM):
-        """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP"""
+    def create_server(
+        self, ipv: int = socket.AF_INET, protocol: int = socket.SOCK_STREAM
+    ) -> None:
+        """Creates a socket with choosen protcol and binds it to choosen PORT with choosen IP.
+
+        Args:
+            ipv (int, optional): Address family. Defaults to ``socket.AF_INET``.
+            protocol (int, optional): Socket type. Defaults to ``socket.SOCK_STREAM``.
+        """
         self.server = socket.socket(ipv, protocol)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((self.host, self.port))
 
-    def append_clients(self, client):
-        """Appends client to server client list"""
+    def append_clients(self, client: Client):
+        """Appends client to server client list.
+
+        Args:
+            client (Client): The client to register in the clients map.
+        """
         self.__clients_map[client.key] = client
 
-    def get_client(self, key) -> None | Client:
-        """Returns client wit that address"""
+    def get_client(self, key: str) -> None | Client:
+        """Returns client wit that address.
+
+        Args:
+            key: The client key (address) to look up.
+
+        Returns:
+            Client | None: The matching client, or ``None`` if not found.
+        """
         return self.__clients_map.get(key)
 
-    def get_user(self, username):
-        """Returns client with that username"""
+    def get_user(self, username) -> Client | None:
+        """Returns client with that username.
+
+        Args:
+            username (str): The username to look up.
+
+        Returns:
+            Client | None: The matching client, or ``None`` if not found.
+        """
         return self.__users_map.get(username)
 
     def address_to_username(self, address: str) -> str:
+        """Resolves a client address to its registered username.
+
+        Args:
+            address (str): The client key (address) to resolve.
+
+        Returns:
+            str: The matching username, or an empty string if none is found.
+        """
         client = self.get_client(address)
 
         if client:
@@ -70,28 +143,52 @@ class Server:
                     return username
         return ""
 
-    def get_all_clients(self):
-        """Returns list of all clients objects from clients map"""
+    def get_all_clients(self) -> list[Client]:
+        """Returns list of all clients objects from clients map.
+
+        Returns:
+            list[Client]: All currently connected clients.
+        """
         return list(self.__clients_map.values())
 
-    def get_all_keys(self):
-        """Returns list of all addresses"""
+    def get_all_keys(self) -> list[str]:
+        """Returns list of all addresses.
+
+        Returns:
+            list: All client keys (addresses) currently registered.
+        """
         return list(self.__clients_map.keys())
 
-    def get_all_usernames(self):
-        """Returns list of all usernames"""
+    def get_all_usernames(self) -> list[str]:
+        """Returns list of all usernames.
+
+        Returns:
+            list[str]: All currently registered usernames.
+        """
         return list(self.__users_map.keys())
 
-    def get_all_users(self):
-        """Returns list of all clients objects from users map"""
+    def get_all_users(self) -> list:
+        """Returns list of all clients objects from users map.
+
+        Returns:
+            list[Client]: All clients that currently have a username.
+        """
         return list(self.__users_map.values())
 
-    def get_clients_count(self):
-        """Returns total count of client connected to server"""
+    def get_clients_count(self) -> int:
+        """Returns total count of client connected to server.
+
+        Returns:
+            int: The number of connected clients.
+        """
         return len(self.__clients_map)
 
     def accept_connection(self) -> Client:
-        """Lisitens for connection and if found one accepts it"""
+        """Lisitens for connection and if found one accepts it.
+
+        Returns:
+            Client: The newly accepted client, already added to the clients map.
+        """
         self.server.listen()
         print("listening...")
 
@@ -103,22 +200,38 @@ class Server:
         self.append_clients(client)
         return client
 
-    def cleanup(self, reason="No reason"):
-        """Closes up sockets and clients"""
+    def cleanup(self, reason: str = "No reason") -> None:
+        """Closes up sockets and clients.
+
+        Args:
+            reason (str, optional): Human-readable reason for shutdown.
+                Defaults to ``"No reason"``.
+        """
         sleep(1)
         self.server.close()
 
         for client in self.get_all_clients():
             client.cleanup()
 
-    def _send_not_registerted_warning(self, client):
+    def _send_not_registerted_warning(self, client: Client) -> None:
+        """Sends a "not registered" warning to the given client.
+
+        Args:
+            client (Client): The client to warn.
+        """
         formated_msg = format_msg(
             msg_type="warning", action="not_registered", reason="Registration required"
         )
         client.send_msg(formated_msg)
 
-    def broadcast(self, msg, not_including=None):
-        """Sends msg to all clients"""
+    def broadcast(self, msg: str, not_including: set[Client] | None = None) -> None:
+        """Sends msg to all clients.
+
+        Args:
+            msg (str): The formatted message to broadcast.
+            not_including (set[Client] | None, optional): Clients to exclude from
+                the broadcast when ``echo_msgs`` is ``False``. Defaults to ``None``.
+        """
         for client in self.get_all_clients():
             if self.echo_msgs or not not_including:
                 client.send_msg(msg)
@@ -129,7 +242,13 @@ class Server:
                 if client not in not_including:
                     client.send_msg(msg)
 
-    def _handle_broadcast(self, client: Client, msg):
+    def _handle_broadcast(self, client: Client, msg: dict) -> None:
+        """Handles a group chat message from a client and broadcasts it.
+
+        Args:
+            client (Client): The sending client.
+            msg (dict): The incoming chat message.
+        """
         src = client.username if client.username else client.address
 
         formated_msg = format_msg(
@@ -138,15 +257,30 @@ class Server:
 
         self.broadcast(formated_msg, not_including={client})
 
-    def _handle_get_usernames(self, client: Client, msg):
-        msg = format_msg(
+    def _handle_get_usernames(self, client: Client, msg: dict) -> None:
+        """Handles a request for the list of registered usernames.
+
+        Args:
+            client (Client): The requesting client.
+            msg (dict): The incoming query message.
+        """
+        respond_msg = format_msg(
             msg_type="response", action="get_usernames", data=self.get_all_usernames()
         )
 
-        client.send_msg(msg)
+        client.send_msg(respond_msg)
 
-    def msg_handler(self, client, msg):
-        """Takes msg type and action and sends it to correct function"""
+    def msg_handler(self, client: Client, msg: dict) -> None:
+        """Takes msg type and action and sends it to correct function.
+
+        Args:
+            client (Client): The client that sent the message.
+            msg (dict): The decoded message, containing ``msg_type`` and ``action``.
+
+        Raises:
+            InvalidMsgType: If ``msg['msg_type']`` is not present in ``action_map``.
+            InvalidMsgAction: If ``msg['action']`` is not valid for the given type.
+        """
         if msg["msg_type"] == "chat" and not client.username:
             self._send_not_registerted_warning(client)
             return
@@ -163,7 +297,13 @@ class Server:
 
         func(client, msg)
 
-    def _handle_register(self, client: Client, msg):
+    def _handle_register(self, client: Client, msg: dict) -> None:
+        """Handles a registration request from a client.
+
+        Args:
+            client (Client): The requesting client.
+            msg (dict): The incoming auth message; ``data`` holds the username.
+        """
         username = msg["data"].strip()
 
         if client.username:
@@ -182,7 +322,13 @@ class Server:
 
         client.send_msg(formated_msg)
 
-    def _handle_logout(self, client, msg):
+    def _handle_logout(self, client: Client, msg: dict) -> None:
+        """Handles a logout request from a client.
+
+        Args:
+            client (Client): The requesting client.
+            msg (dict): The incoming auth message.
+        """
         if not client.username:
             formated_msg = format_msg(msg_type="response", action="logout", data=False)
 
@@ -197,8 +343,13 @@ class Server:
 
         client.send_msg(formated_msg)
 
-    def _handle_whisper(self, client: Client, msg):
-        """Sends msg to choosen client and echos it back to sender"""
+    def _handle_whisper(self, client: Client, msg: dict) -> None:
+        """Sends msg to choosen client and echos it back to sender.
+
+        Args:
+            client (Client): The sending client.
+            msg (dict): The incoming whisper message; ``dst`` is the target username.
+        """
         username = msg["dst"]
         dst = self.get_user(username)
 
@@ -223,8 +374,13 @@ class Server:
 
         client.send_msg(formated_msg)
 
-    def _connection_loop(self):
-        """On loop lisitens for connections and recives/send msgs to everyone"""
+    def _connection_loop(self) -> None:
+        """On loop lisitens for connections and recives/send msgs to everyone.
+
+        Creates the server socket and repeatedly accepts new clients, spawning a
+        daemon thread per client to receive its messages. Exits on
+        ``KeyboardInterrupt`` and always prints a shutdown message.
+        """
         self.create_server()
 
         try:
@@ -246,12 +402,12 @@ class Server:
         finally:
             print("Program closed.")
 
-    def start(self):
-        """Starts server connection. lisitens for clients and connects them"""
+    def start(self) -> None:
+        """Starts server connection. lisitens for clients and connects them."""
         self._connection_loop()
 
 
-def main():
+def main() -> None:
     Server.load_from_config().start()
 
 

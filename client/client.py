@@ -18,7 +18,9 @@ class Client:
 
     Holds values esseintal for client to recive and send packets."""
 
-    def __init__(self, port, host, IPV=socket.AF_INET, PROTOCOL=socket.SOCK_STREAM):
+    def __init__(
+        self, port, host, IPV=socket.AF_INET, PROTOCOL=socket.SOCK_STREAM
+    ) -> None:
         """Initializes a Client instance.
 
         Args:
@@ -73,7 +75,7 @@ class Client:
 
         return cls(**server_config)
 
-    def connect_host(self):
+    def connect_host(self) -> None:
         """Connects the client socket to the configured host and port.
 
         Raises:
@@ -85,7 +87,7 @@ class Client:
             print(f"Connection failed: {e}", file=sys.stderr)
             raise
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Marks the client as disconnected and closes the underlying socket.
 
         The socket shutdown is attempted gracefully; any ``OSError`` raised
@@ -159,7 +161,7 @@ class Client:
 
         return response["data"]
 
-    def broadcast(self, data: str):
+    def broadcast(self, data: str) -> None:
         """Sends a group chat message to the server (fire-and-forget).
 
         Args:
@@ -169,7 +171,7 @@ class Client:
 
         self._send_to_server(msg)
 
-    def send_whisper(self, data: str, dst: str):
+    def send_whisper(self, data: str, dst: str) -> None:
         """Sends a private (whisper) message to a specific user.
 
         Args:
@@ -191,7 +193,7 @@ class Client:
         """
         return f"Server has disconnected. Reason: {msg['reason']} {msg['data']}"
 
-    def _handle_warning(self, msg: dict):
+    def _handle_warning(self, msg: dict) -> None:
         """Handles generic warning messages.
 
         Currently a no-op placeholder.
@@ -201,7 +203,7 @@ class Client:
         """
         return
 
-    def _handle_chat(self, msg: dict):
+    def _handle_chat(self, msg: dict) -> None:
         """Handles an incoming group chat message.
 
         Appends the message to ``chat_history`` and invokes ``on_message`` if set.
@@ -214,7 +216,7 @@ class Client:
         if callable(self.on_message):
             self.on_message(msg)
 
-    def _handle_whisper(self, msg: dict):
+    def _handle_whisper(self, msg: dict) -> None:
         """Handles an incoming whisper (private) message.
 
         Appends the message to ``chat_history`` and invokes ``on_message`` if set.
@@ -227,7 +229,7 @@ class Client:
         if callable(self.on_message):
             self.on_message(msg)
 
-    def _handle_response(self, msg: dict):
+    def _handle_response(self, msg: dict) -> None:
         """Handles a server response by storing it and unblocking waiters.
 
         Args:
@@ -236,7 +238,7 @@ class Client:
         self.__temp_response = msg
         self.__response_ready.set()
 
-    def msg_handler(self, msg: dict):
+    def msg_handler(self, msg: dict) -> None:
         """Dispatches an incoming message to the appropriate handler.
 
         Args:
@@ -258,7 +260,7 @@ class Client:
 
         func(msg)
 
-    def recive_msg(self):
+    def recive_msg(self) -> None:
         """Receives and processes messages from the server until disconnect.
 
         Runs in a loop reading newline-delimited JSON messages from the socket
@@ -287,7 +289,7 @@ class Client:
             print("Leaving reciving msg thread", file=sys.stderr)
             self.cleanup()
 
-    def _send_to_server(self, msg: str):
+    def _send_to_server(self, msg: str) -> None:
         """Sends a newline-terminated message to the server.
 
         Args:
@@ -302,14 +304,14 @@ class Client:
                 file=sys.stderr,
             )
 
-    def start(self):
+    def start(self) -> None:
         """Connects to the server and starts the background receive thread."""
         self.connect_host()
         self.thread = threading.Thread(target=self.recive_msg)
         self.thread.start()
 
 
-def main():
+def main() -> None:
     """TESTINGS CONNECTION"""
     client = Client.load_from_config()
     client.connect_host()
