@@ -33,25 +33,49 @@ python -m pip install .
 
 ## How to run
 
-### If you are server
+### New menu
+
+1. You can on windows run `run.bat` and on linux `run.sh`.
+
+2. Now you'd have to configure
+
+#### If you are server
+
+- Set configuration in server_config to your liking inside server object.
+  - `0.0.0.0` so everyone can connect
+  - `127.0.0.1` so everyone from your computer can connect
+
+#### If you are client
+
+- Inside your `server_config.json` put in client `host: Your server IPV4`
+
+1. Then choose whoever you want to be
+
+### Old method
+
+#### If you are server
 
 1. Set configuration in server_config to your liking inside server object.
     - `0.0.0.0` so everyone can connect
     - `127.0.0.1` so everyone from your computer can connect
 
 2. On machine you want to host server in terminal run:
+
 ```bash
 python -m server.main
 ```
+
 (This terminal won't be usable while server is running)
 
-### If you are client
+#### If you are client
 
-1. Inside your server_config.json put in client host: "Your server IPV4"
+1. Inside your `server_config.json` put in client `host: Your server IPV4`
 2. On any local machine run:
+
 ```bash
 python -m client.main
 ```
-3. Done! you are connected to that server
+
+1. Done! you are connected to that server
 
 This is my first repo. So please don't be mean
