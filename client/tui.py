@@ -247,95 +247,91 @@ class Tui:
 
         self.__client.send_whisper(user_msg, client)
 
+    def _remote_commands_print_menu(self) -> None:
+        """Print the top-level remote command menu."""
+        print(f"{Fore.CYAN}1.{Style.RESET_ALL} Send file/msg into someone's file")
+        print(f"{Fore.CYAN}2.{Style.RESET_ALL} Exit")
 
-def _remote_commands_print_menu(self) -> None:
-    """Print the top-level remote command menu."""
-    print(f"{Fore.CYAN}1.{Style.RESET_ALL} Send file/msg into someone's file")
-    print(f"{Fore.CYAN}2.{Style.RESET_ALL} Exit")
+    def _send_into_file_print_menu(self) -> None:
+        """Print the submenu for sending files or messages into a remote file."""
+        print(f"{Fore.CYAN}1.{Style.RESET_ALL} Send your file into file")
+        print(f"{Fore.CYAN}2.{Style.RESET_ALL} Send msg into file")
+        print(f"{Fore.CYAN}3.{Style.RESET_ALL} Back")
 
+    def send_into_file(self) -> None:
+        """Handle the submenu for sending a file or a message into a remote client's file.
 
-def _send_into_file_print_menu(self) -> None:
-    """Print the submenu for sending files or messages into a remote file."""
-    print(f"{Fore.CYAN}1.{Style.RESET_ALL} Send your file into file")
-    print(f"{Fore.CYAN}2.{Style.RESET_ALL} Send msg into file")
-    print(f"{Fore.CYAN}3.{Style.RESET_ALL} Back")
+        Loops until the user chooses to go back. For each action it asks the user
+        to pick a destination client, then collects the required inputs and
+        delegates the actual send to ``self.__client.send_into_file``.
+        """
+        while True:
+            clear()
+            self._send_into_file_print_menu()
 
+            user_choice = self._user_input("> ")
 
-def send_into_file(self) -> None:
-    """Handle the submenu for sending a file or a message into a remote client's file.
+            match user_choice:
+                case "1":
+                    dst = self._choose_client(self.__client.get_usernames())
+                    if dst is None:
+                        continue
 
-    Loops until the user chooses to go back. For each action it asks the user
-    to pick a destination client, then collects the required inputs and
-    delegates the actual send to ``self.__client.send_into_file``.
-    """
-    while True:
-        clear()
-        self._send_into_file_print_menu()
+                    source_file = self._user_input(
+                        f"Enter your file name: {Fore.YELLOW}{self.source_files_prefix}{Style.RESET_ALL}"
+                    ).strip()
+                    target_file = self._user_input(
+                        f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: {Fore.YELLOW}{self.target_files_prefix}{Style.RESET_ALL}"
+                    ).strip()
 
-        user_choice = self._user_input("> ")
+                    source_file = self.source_files_prefix + source_file
 
-        match user_choice:
-            case "1":
-                dst = self._choose_client(self.__client.get_usernames())
-                if dst is None:
-                    continue
+                    self.__client.send_into_file(
+                        dst, filepath=source_file, filename=target_file
+                    )
 
-                source_file = self._user_input(
-                    f"Enter your file name: {Fore.YELLOW}{self.source_files_prefix}{Style.RESET_ALL}"
-                ).strip()
-                target_file = self._user_input(
-                    f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: {Fore.YELLOW}{self.target_files_prefix}{Style.RESET_ALL}"
-                ).strip()
+                    input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
 
-                source_file = self.source_files_prefix + source_file
+                case "2":
+                    dst = self._choose_client(self.__client.get_usernames())
+                    if dst is None:
+                        continue
 
-                self.__client.send_into_file(
-                    dst, filepath=source_file, filename=target_file
-                )
+                    data = self._user_input("Enter your message: ")
+                    target_file = self._user_input(
+                        f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: "
+                    ).strip()
 
-                input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
+                    self.__client.send_into_file(dst, data=data, filename=target_file)
 
-            case "2":
-                dst = self._choose_client(self.__client.get_usernames())
-                if dst is None:
-                    continue
+                    input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
 
-                data = self._user_input("Enter your message: ")
-                target_file = self._user_input(
-                    f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: "
-                ).strip()
+                case "3":
+                    break
 
-                self.__client.send_into_file(dst, data=data, filename=target_file)
+                case _:
+                    self.__invalid_input("Invalid choice.")
 
-                input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
+    def remote_command(self) -> None:
+        """Top-level loop for remote commands.
 
-            case "3":
-                break
+        Displays the main menu and dispatches to the appropriate handler until
+        the user chooses to exit.
+        """
+        while True:
+            clear()
+            self._remote_commands_print_menu()
 
-            case _:
-                self.__invalid_input("Invalid choice.")
+            user_choice = self._user_input()
 
-
-def remote_command(self) -> None:
-    """Top-level loop for remote commands.
-
-    Displays the main menu and dispatches to the appropriate handler until
-    the user chooses to exit.
-    """
-    while True:
-        clear()
-        self._remote_commands_print_menu()
-
-        user_choice = self._user_input()
-
-        match user_choice:
-            case "1":
-                self.send_into_file()
-            case "2":
-                break
-            case _:
-                print(f"{Fore.RED}Invalid choice.{Style.RESET_ALL}")
-                input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
+            match user_choice:
+                case "1":
+                    self.send_into_file()
+                case "2":
+                    break
+                case _:
+                    print(f"{Fore.RED}Invalid choice.{Style.RESET_ALL}")
+                    input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
 
     def start(self):
         while not self.__client.disconnected.is_set():
