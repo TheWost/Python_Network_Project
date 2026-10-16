@@ -1,16 +1,29 @@
-import os
-
-from colorama import Fore, Style, init
+from colorama import Fore, Style
 from prompt_toolkit import PromptSession
 
 from client.client import Client
 from utils import clear
 
-init(autoreset=True)
-
 
 class Tui:
-    def __init__(self, client: Client):
+    """Terminal user interface for interacting with the chat client.
+
+    Handles login, chat, whisper, and remote command flows, and renders
+    all menus and prompts to the terminal.
+
+    Attributes:
+        prompt_session (PromptSession): Prompt-toolkit session used for all
+            user input, configured to erase the prompt when done.
+        source_files_prefix (str): Directory prefix prepended to source file
+            names before they are sent.
+        target_files_prefix (str): Directory prefix prepended to destination
+            file names on the remote client.
+        __client (Client): Client instance used for all network operations.
+        __username (str | None): Currently logged-in username, or ``None``
+            when logged in as guest.
+    """
+
+    def __init__(self, client: Client) -> None:
         """Initilize the TUI and starts loggin process
 
         Args:
@@ -22,18 +35,28 @@ class Tui:
 
         self.prompt_session = PromptSession(erase_when_done=True)
 
+        self.source_files_prefix = "source_files/"
+        self.target_files_prefix = "target_files/"
+
         self.login()
 
-    def _print_menu(self):
-        """Displays navigation menu in terminal"""
-        print(f"=== {self.__username if self.__username else 'GUEST'} ===")
-        print(f"1. {'log out' if self.__username else 'Log in'}")
-        print("2. Group Chat")
-        print("3. Whisper")
-        print("4. Remote command")
-        print("5. exit")
+    def _print_menu(self) -> None:
+        """Displays the main navigation menu in the terminal."""
+        username = (
+            self.__username
+            if self.__username
+            else f"{Fore.YELLOW}GUEST{Style.RESET_ALL}"
+        )
+        print(f"=== {Fore.CYAN}{username}{Style.RESET_ALL} ===")
+        print(
+            f"{Fore.CYAN}1.{Style.RESET_ALL} {'Log out' if self.__username else 'Log in'}"
+        )
+        print(f"{Fore.CYAN}2.{Style.RESET_ALL} Group Chat")
+        print(f"{Fore.CYAN}3.{Style.RESET_ALL} Whisper")
+        print(f"{Fore.CYAN}4.{Style.RESET_ALL} Remote command")
+        print(f"{Fore.CYAN}5.{Style.RESET_ALL} Exit")
 
-    def __invalid_input(self, prompt: str = "Invalid answer"):
+    def __invalid_input(self, prompt: str = "Invalid answer") -> None:
         """Displays an error msg and waits for user input
 
         args:
@@ -224,9 +247,95 @@ class Tui:
 
         self.__client.send_whisper(user_msg, client)
 
-    def remote_command(self):
-        # Same idea like in whisper. Just ask for command instead.
-        pass
+
+def _remote_commands_print_menu(self) -> None:
+    """Print the top-level remote command menu."""
+    print(f"{Fore.CYAN}1.{Style.RESET_ALL} Send file/msg into someone's file")
+    print(f"{Fore.CYAN}2.{Style.RESET_ALL} Exit")
+
+
+def _send_into_file_print_menu(self) -> None:
+    """Print the submenu for sending files or messages into a remote file."""
+    print(f"{Fore.CYAN}1.{Style.RESET_ALL} Send your file into file")
+    print(f"{Fore.CYAN}2.{Style.RESET_ALL} Send msg into file")
+    print(f"{Fore.CYAN}3.{Style.RESET_ALL} Back")
+
+
+def send_into_file(self) -> None:
+    """Handle the submenu for sending a file or a message into a remote client's file.
+
+    Loops until the user chooses to go back. For each action it asks the user
+    to pick a destination client, then collects the required inputs and
+    delegates the actual send to ``self.__client.send_into_file``.
+    """
+    while True:
+        clear()
+        self._send_into_file_print_menu()
+
+        user_choice = self._user_input("> ")
+
+        match user_choice:
+            case "1":
+                dst = self._choose_client(self.__client.get_usernames())
+                if dst is None:
+                    continue
+
+                source_file = self._user_input(
+                    f"Enter your file name: {Fore.YELLOW}{self.source_files_prefix}{Style.RESET_ALL}"
+                ).strip()
+                target_file = self._user_input(
+                    f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: {Fore.YELLOW}{self.target_files_prefix}{Style.RESET_ALL}"
+                ).strip()
+
+                source_file = self.source_files_prefix + source_file
+
+                self.__client.send_into_file(
+                    dst, filepath=source_file, filename=target_file
+                )
+
+                input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
+
+            case "2":
+                dst = self._choose_client(self.__client.get_usernames())
+                if dst is None:
+                    continue
+
+                data = self._user_input("Enter your message: ")
+                target_file = self._user_input(
+                    f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: "
+                ).strip()
+
+                self.__client.send_into_file(dst, data=data, filename=target_file)
+
+                input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
+
+            case "3":
+                break
+
+            case _:
+                self.__invalid_input("Invalid choice.")
+
+
+def remote_command(self) -> None:
+    """Top-level loop for remote commands.
+
+    Displays the main menu and dispatches to the appropriate handler until
+    the user chooses to exit.
+    """
+    while True:
+        clear()
+        self._remote_commands_print_menu()
+
+        user_choice = self._user_input()
+
+        match user_choice:
+            case "1":
+                self.send_into_file()
+            case "2":
+                break
+            case _:
+                print(f"{Fore.RED}Invalid choice.{Style.RESET_ALL}")
+                input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
 
     def start(self):
         while not self.__client.disconnected.is_set():
