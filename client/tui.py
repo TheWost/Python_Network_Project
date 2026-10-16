@@ -287,7 +287,7 @@ class Tui:
                     source_file = self.source_files_prefix + source_file
 
                     self.__client.send_into_file(
-                        dst, filepath=source_file, filename=target_file
+                        dst, source_path=source_file, target_filename=target_file
                     )
 
                     input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
@@ -302,7 +302,9 @@ class Tui:
                         f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: "
                     ).strip()
 
-                    self.__client.send_into_file(dst, data=data, filename=target_file)
+                    self.__client.send_into_file(
+                        dst, data=data, target_filename=target_file
+                    )
 
                     input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
 

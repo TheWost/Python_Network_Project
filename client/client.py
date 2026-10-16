@@ -195,7 +195,7 @@ class Client:
         self._send_to_server(msg)
 
     def send_into_file(
-        self, dst: str, data: str = "", filepath: str = "", filename: str = ""
+        self, dst: str, data: str = "", source_path: str = "", target_filename: str = ""
     ) -> None:
         """Sends a message to a chosen client to create a new file with the specified data.
 
@@ -205,15 +205,15 @@ class Client:
             filepath (str): Path to a local file whose contents will be read and sent as data.
             filename (str): Name of the file to be created on the destination client.
         """
-        if filepath:
-            with open(filepath, "r") as f:
+        if source_path:
+            with open(source_path, "r") as f:
                 data = f.read()
 
         formated_msg = format_msg(
             msg_type="remote",
             action="send_into_file",
             dst=dst,
-            filename=filename,
+            filename=target_filename,
             data=data,
         )
 
