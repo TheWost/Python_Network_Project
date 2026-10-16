@@ -12,11 +12,18 @@ from classes.protocol import format_msg
 
 
 class Client:
-    """ARGS:
-    address: str
-    socket.
+    """Handles network connection, packet receiving, and routing for the client.
 
-    Holds values esseintal for client to recive and send packets."""
+    Attributes:
+        socket (socket.socket): The underlying network socket object.
+        HOST (str): The server IP address or hostname.
+        PORT (int): The server port number.
+        thread (threading.Thread | None): Background thread listening for incoming server packets.
+        download_dir (str): Directory path where received files are saved.
+        disconnected (threading.Event): Event flag tracking connection state.
+        chat_history (list): Log of received chat messages.
+        action_map (dict): Routing table mapping incoming packet types and actions to their handler methods.
+    """
 
     def __init__(
         self, port, host, IPV=socket.AF_INET, PROTOCOL=socket.SOCK_STREAM
@@ -34,6 +41,8 @@ class Client:
         self.PORT = port
         self.thread: threading.Thread | None = None
 
+        self.download_dir = "sent_files"
+
         self.disconnected = threading.Event()
 
         self.chat_history = []
@@ -50,6 +59,9 @@ class Client:
             "warning": {
                 "server_close": self._hadnle_server_close,
                 "not_registered": self._handle_warning,
+            },
+            "remote": {
+                "send_into_file": self._handle_send_into_file,
             },
         }
 
@@ -182,6 +194,31 @@ class Client:
 
         self._send_to_server(msg)
 
+    def send_into_file(
+        self, dst: str, data: str = "", filepath: str = "", filename: str = ""
+    ) -> None:
+        """Sends a message to a chosen client to create a new file with the specified data.
+
+        Args:
+            dst (str): The target client username to receive the message.
+            data (str): Direct text data to be placed in the remote file.
+            filepath (str): Path to a local file whose contents will be read and sent as data.
+            filename (str): Name of the file to be created on the destination client.
+        """
+        if filepath:
+            with open(filepath, "r") as f:
+                data = f.read()
+
+        formated_msg = format_msg(
+            msg_type="remote",
+            action="send_into_file",
+            dst=dst,
+            filename=filename,
+            data=data,
+        )
+
+        self._send_to_server(formated_msg)
+
     def _hadnle_server_close(self, msg: dict) -> str:
         """Handles a server-close warning message.
 
@@ -228,6 +265,17 @@ class Client:
 
         if callable(self.on_message):
             self.on_message(msg)
+
+    def _handle_send_into_file(self, msg: dict) -> None:
+        full_file_name = f"{self.download_dir}/{msg['filename']}"
+
+        with open(full_file_name, "w") as f:
+            f.write(msg["data"])
+
+        most_recent_file_by_user = f"recent_file/{msg['src']}"
+
+        with open(most_recent_file_by_user, "w") as f:
+            f.write(msg["data"])
 
     def _handle_response(self, msg: dict) -> None:
         """Handles a server response by storing it and unblocking waiters.

@@ -42,6 +42,7 @@ class Server:
                 "get_usernames": self._handle_get_usernames  # For now it is clients. Once login will be implemeneted. It wil lbe users
             },
             "auth": {"register": self._handle_register, "logout": self._handle_logout},
+            "remote": {"send_into_file": self._handle_send_into_file},
         }
 
     @classmethod
@@ -270,33 +271,6 @@ class Server:
 
         client.send_msg(respond_msg)
 
-    def msg_handler(self, client: Client, msg: dict) -> None:
-        """Takes msg type and action and sends it to correct function.
-
-        Args:
-            client (Client): The client that sent the message.
-            msg (dict): The decoded message, containing ``msg_type`` and ``action``.
-
-        Raises:
-            InvalidMsgType: If ``msg['msg_type']`` is not present in ``action_map``.
-            InvalidMsgAction: If ``msg['action']`` is not valid for the given type.
-        """
-        if msg["msg_type"] == "chat" and not client.username:
-            self._send_not_registerted_warning(client)
-            return
-
-        actions = self.action_map.get(msg["msg_type"])
-
-        if not actions:
-            raise InvalidMsgType(f"Given msg type from {client} was invalid")
-
-        func = actions.get(msg["action"])
-
-        if not func:
-            raise InvalidMsgAction(f"Given msg action from {client} was invalid")
-
-        func(client, msg)
-
     def _handle_register(self, client: Client, msg: dict) -> None:
         """Handles a registration request from a client.
 
@@ -373,6 +347,53 @@ class Server:
             return
 
         client.send_msg(formated_msg)
+
+    def _handle_send_into_file(self, client: Client, msg: dict):
+
+        new_file_name = f"{client.username}_{msg['filename']}"
+
+        src = client.username if client.username else ""
+
+        formated_msg = format_msg(
+            msg_type="remote",
+            action="send_into_file",
+            dst=msg["dst"],
+            filename=new_file_name,
+            data=msg["data"],
+            src=src,
+        )
+
+        user = self.get_user(msg["dst"])
+
+        if isinstance(user, Client):
+            user.send_msg(formated_msg)
+
+    def msg_handler(self, client: Client, msg: dict) -> None:
+        """Takes msg type and action and sends it to correct function.
+
+        Args:
+            client (Client): The client that sent the message.
+            msg (dict): The decoded message, containing ``msg_type`` and ``action``.
+
+        Raises:
+            InvalidMsgType: If ``msg['msg_type']`` is not present in ``action_map``.
+            InvalidMsgAction: If ``msg['action']`` is not valid for the given type.
+        """
+        if msg["msg_type"] == "chat" and not client.username:
+            self._send_not_registerted_warning(client)
+            return
+
+        actions = self.action_map.get(msg["msg_type"])
+
+        if not actions:
+            raise InvalidMsgType(f"Given msg type from {client} was invalid")
+
+        func = actions.get(msg["action"])
+
+        if not func:
+            raise InvalidMsgAction(f"Given msg action from {client} was invalid")
+
+        func(client, msg)
 
     def _connection_loop(self) -> None:
         """On loop lisitens for connections and recives/send msgs to everyone.
