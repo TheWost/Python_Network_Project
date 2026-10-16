@@ -9,6 +9,7 @@ def format_msg(
     src: str | int = "",
     reason: str = "",
     data: Any = "",
+    filename: str = "",
 ) -> str:
     """Formats an json object that represents msg between server and client. Returns str
     e.g. format_msg(msg_type="chat", action="group", src="127.0.0.1", data=True)  -> json.dumps("msg_type": "chat", "action": "group", "src": "127.0.0.1", "data": True)
@@ -21,6 +22,7 @@ def format_msg(
         "response",
         "auth",
         "warning",
+        "remote",
     ]
 
     if not msg_type in aviable_msg_types:

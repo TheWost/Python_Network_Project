@@ -1,18 +1,15 @@
-import os
-
 from colorama import Fore, Style
 
-
-def clear():
-    os.system("clear" if os.name == "posix" else "cls")
+from utils import clear
 
 
 def main():
     while True:
         clear()
         print(Fore.BLUE + "1. Server" + Style.RESET_ALL)
-        print(Fore.YELLOW + "2. Client" + Style.RESET_ALL)
-        print(Fore.RED + "3. Exit" + Style.RESET_ALL)
+        print(Fore.GREEN + "2. Client" + Style.RESET_ALL)
+        print(Fore.YELLOW + "3. Connection config" + Style.RESET_ALL)
+        print(Fore.RED + "4. Exit" + Style.RESET_ALL)
 
         user_choice = input(Fore.GREEN + "> " + Style.RESET_ALL)
 
@@ -29,7 +26,13 @@ def main():
                 clear()
                 main()
 
-            case "3" | "quit" | "exit" | "disconnect" | "dsc":
+            case "3":
+                from configs.set_up_config import set_up_config
+
+                clear()
+                set_up_config()
+
+            case "4" | "quit" | "exit" | "disconnect" | "dsc":
                 return
 
             case _:

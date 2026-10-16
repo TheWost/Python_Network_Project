@@ -4,7 +4,7 @@ from colorama import Fore, Style, init
 from prompt_toolkit import PromptSession
 
 from client.client import Client
-# from configs.config import Config
+from utils import clear
 
 init(autoreset=True)
 
@@ -32,10 +32,6 @@ class Tui:
         print("3. Whisper")
         print("4. Remote command")
         print("5. exit")
-
-    def clear(self):
-        """Clears terminal"""
-        os.system("cls" if os.name == "nt" else "clear")
 
     def __invalid_input(self, prompt: str = "Invalid answer"):
         """Displays an error msg and waits for user input
@@ -192,7 +188,7 @@ class Tui:
             print(msg["src"] + ": " + msg["data"])
 
     def group_chat(self):
-        self.clear()
+        clear()
 
         for msg in self.__client.chat_history:
             self._print_msg(msg)
@@ -212,7 +208,7 @@ class Tui:
             self.__client.on_message = None
 
     def whisper(self):
-        self.clear()
+        clear()
 
         clients = self.__client.get_usernames()
 
@@ -234,7 +230,7 @@ class Tui:
 
     def start(self):
         while not self.__client.disconnected.is_set():
-            self.clear()
+            clear()
 
             self._print_menu()
             user_choice = self._user_input()
