@@ -21,6 +21,12 @@ class Tui:
             names before they are sent.
         inbox_prefix (str): Directory prefix prepended to destination
             file names on the remote client.
+        recived_files_history (list): List tracking the history of files
+            received from the server/clients.
+        not_read_new_file (bool): Flag indicating if there are unread
+            newly received files.
+        BACK_INPUTS (set): Collection of command strings that trigger
+            an exit or back action.
         __client (Client): Client instance used for all network operations.
         __username (str | None): Currently logged-in username, or ``None``
             when logged in as guest.
@@ -76,9 +82,7 @@ class Tui:
         print(f"{Fore.CYAN}q.{Style.RESET_ALL} Exit")
 
     def _print_file_history(self) -> None:
-        """Displays the received file history and resets the unread flag."""
-        self.not_read_new_file = False  # Clear the notification when viewed
-
+        """Displays the received file history."""
         print(f"\n=== {Fore.CYAN}Received Files History{Style.RESET_ALL} ===")
 
         if not self.recived_files_history:
@@ -87,7 +91,31 @@ class Tui:
             for i, file_item in enumerate(self.recived_files_history, start=1):
                 print(f"{Fore.CYAN}{i}.{Style.RESET_ALL} {file_item}")
 
-        print(f"\n{Fore.CYAN}b.{Style.RESET_ALL} Back to main menu")
+    def file_history(self) -> None:
+        """Displays received files history with color coding and management options."""
+        clear()
+        self.not_read_new_file = False
+
+        self._print_file_history()
+
+        print(f"\n{Fore.YELLOW}/clear{Style.RESET_ALL} to clear history")
+        print(f"{Fore.CYAN}q.{Style.RESET_ALL} back")
+
+        user_input = self._user_input(">").strip().lower()
+
+        if self._check_if_exit(user_input):
+            return
+
+        elif user_input == "/clear":
+            confirm = (
+                self._user_input(f"{Fore.RED}Are you sure? (y/n): {Style.RESET_ALL}")
+                .strip()
+                .lower()
+            )
+
+            if confirm == "y" or confirm == "yes":
+                self.recived_files_history.clear()
+                print(f"{Fore.GREEN}File history cleared.{Style.RESET_ALL}")
 
     def __invalid_input(self, prompt: str = "Invalid answer") -> None:
         """Displays an error msg and waits for user input
@@ -98,13 +126,13 @@ class Tui:
         input(f"{Fore.RED}{Style.BRIGHT}{prompt}{Style.RESET_ALL}")
 
     def _check_if_exit(self, user_msg: str) -> bool:
-        """Checks if input is equal to /q
+        """Checks if the user input matches any registered back or exit command.
 
-        args:
-            user_msg (str): input to compare
+        Args:
+            user_msg (str): Input string to evaluate.
 
-        returns:
-            True if input is /q else False
+        Returns:
+            bool: True if the input is in BACK_INPUTS, else False.
         """
         return user_msg.lower() in self.BACK_INPUTS
 
