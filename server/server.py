@@ -350,6 +350,12 @@ class Server:
 
     def _handle_send_into_file(self, client: Client, msg: dict):
 
+        print(type(msg))
+
+        for key, value in msg.items():
+            print(key, value)
+
+        print(msg["filename"])
         new_file_name = f"{client.username}_{msg['filename']}"
 
         src = client.username if client.username else ""

@@ -36,6 +36,7 @@ def format_msg(
             "dst": dst,
             "src": src,
             "reason": reason,
+            "filename": filename,
         }
     )
 
