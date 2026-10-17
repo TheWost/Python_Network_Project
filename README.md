@@ -77,3 +77,12 @@ python -m client.main
 3. Done! you are connected to that server
 
 This is my first repo. So please don't be mean
+
+
+## Sending files
+
+All of the files that you want to send should be inside `/source_files`
+
+All files that will be sent should be inside `/inbox`
+
+In `recent_files` you'd get all recent files for user each.

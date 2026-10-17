@@ -43,6 +43,8 @@ class Tui:
 
         self.__client.download_dir = self.inbox_prefix
 
+        Path(self.source_files_prefix).mkdir(parents=True, exist_ok=True)
+
         self.BACK_INPUTS = {"exit", "/exit", "/q", "q", "b", "back", "\x1b"}
 
         self.login()
