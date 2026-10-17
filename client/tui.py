@@ -1,5 +1,4 @@
 from pathlib import Path
-from time import clock_getres
 
 from colorama import Fore, Style
 from prompt_toolkit import PromptSession
@@ -68,7 +67,27 @@ class Tui:
         print(f"{Fore.CYAN}2.{Style.RESET_ALL} Group Chat")
         print(f"{Fore.CYAN}3.{Style.RESET_ALL} Whisper")
         print(f"{Fore.CYAN}4.{Style.RESET_ALL} Remote command")
+        file_badge = (
+            f"[{Fore.RED}NEW{Style.RESET_ALL}] File History"
+            if self.not_read_new_file
+            else "File History"
+        )
+        print(f"{Fore.CYAN}5.{Style.RESET_ALL} {file_badge}")
         print(f"{Fore.CYAN}q.{Style.RESET_ALL} Exit")
+
+    def _print_file_history(self) -> None:
+        """Displays the received file history and resets the unread flag."""
+        self.not_read_new_file = False  # Clear the notification when viewed
+
+        print(f"\n=== {Fore.CYAN}Received Files History{Style.RESET_ALL} ===")
+
+        if not self.recived_files_history:
+            print(f"{Fore.YELLOW}No files received yet.{Style.RESET_ALL}")
+        else:
+            for i, file_item in enumerate(self.recived_files_history, start=1):
+                print(f"{Fore.CYAN}{i}.{Style.RESET_ALL} {file_item}")
+
+        print(f"\n{Fore.CYAN}b.{Style.RESET_ALL} Back to main menu")
 
     def __invalid_input(self, prompt: str = "Invalid answer") -> None:
         """Displays an error msg and waits for user input
@@ -479,6 +498,9 @@ class Tui:
                         self.remote_command()
                     else:
                         self.__invalid_input()
+
+                case "5":
+                    self._print_file_history()
 
                 case "q":
                     self.__client.cleanup()
