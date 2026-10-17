@@ -104,7 +104,7 @@ class Tui:
         print(f"\n{Fore.YELLOW}/clear{Style.RESET_ALL} to clear history")
         print(f"{Fore.CYAN}q.{Style.RESET_ALL} back")
 
-        user_input = self._user_input("\n>").strip().lower()
+        user_input = self._user_input("\n> ").strip().lower()
 
         if self._check_if_exit(user_input):
             return
