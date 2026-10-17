@@ -4,4 +4,5 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .env
+source_files/kalkulator.py
 TODO.txt
