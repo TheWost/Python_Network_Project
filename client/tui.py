@@ -528,7 +528,7 @@ class Tui:
                         self.__invalid_input()
 
                 case "5":
-                    self._print_file_history()
+                    self.file_history()
 
                 case "q":
                     self.__client.cleanup()
