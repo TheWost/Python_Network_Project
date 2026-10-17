@@ -270,7 +270,19 @@ class Client:
             self.on_message(msg)
 
     def _handle_send_into_file(self, msg: dict) -> None:
+        """Saves incoming message file data to the primary download directory
+        and updates the user's most recent file cache.
 
+            Args:
+                msg (dict): A dictionary containing message payload data.
+                    Expected keys:
+                        - 'filename' (str): Name of the file being received.
+                        - 'data' (str): Content to write into the file.
+                        - 'src' (str): Username or ID of the sender.
+
+            Returns:
+                None
+        """
         Path(self.download_dir).mkdir(parents=True, exist_ok=True)
         full_file_name = f"{self.download_dir}/{msg['filename']}"
 
