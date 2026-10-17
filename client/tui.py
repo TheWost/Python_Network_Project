@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import clock_getres
 
 from colorama import Fore, Style
 from prompt_toolkit import PromptSession
@@ -42,6 +43,10 @@ class Tui:
         self.inbox_prefix = "inbox/"
 
         self.__client.download_dir = self.inbox_prefix
+
+        self.recived_files_history = []
+        self.not_read_new_file = False
+        self.__client.on_recived_file = self._update_file_history
 
         Path(self.source_files_prefix).mkdir(parents=True, exist_ok=True)
 
@@ -136,6 +141,10 @@ class Tui:
         """
         user_msg = self.prompt_session.prompt(ANSI(prompt))
         return user_msg
+
+    def _update_file_history(self, msg):
+        self.recived_files_history.append([msg["src"], msg["filename"]])
+        self.not_read_new_file = True
 
     def login(self):
         """Asks user for login name and sends to server. if successfull then sets it as sef.__username"""
