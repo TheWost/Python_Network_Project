@@ -270,12 +270,15 @@ class Tui:
 
         self.__client.send_whisper(user_msg, client)
 
-    def _print_source_files(self) -> None:
+    def _print_source_files(self) -> list[str] | None:
         """List files available under ``self.source_files_prefix``.
 
         Prints a numbered listing so the user can see what the prefix contains
         before typing a name. Prints a short notice instead if the prefix is
         missing or contains no files.
+
+        Returns:
+            files_list if folder exists or there are any files.
         """
         folder = Path(self.source_files_prefix)
 
@@ -289,10 +292,15 @@ class Tui:
             print(f"{Fore.YELLOW}(no files in {folder}){Style.RESET_ALL}\n")
             return
 
+        files_list = []
+
         print(f"{Style.BRIGHT}Available files in {folder}{Style.RESET_ALL}")
         for number, name in enumerate(files, start=1):
+            files_list.append(name)
             print(f"  {Fore.CYAN}{number}.{Style.RESET_ALL} {name}")
         print()
+
+        return files_list
 
     def _menu_remote(self, title: str, options: list[str]) -> str | None:
         """Render a remote menu and return the chosen option number as a string.
@@ -330,6 +338,7 @@ class Tui:
             f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL} "
             f"(blank to cancel): {Fore.YELLOW}{self.inbox_prefix}{Style.RESET_ALL}"
         ).strip()
+
         return value or None
 
     def _send_file_into_file(self) -> None:
@@ -337,17 +346,33 @@ class Tui:
         clear()
         dst = self._choose_client(self.__client.get_usernames())
         clear()
+
         if dst is None:
             return
 
-        self._print_source_files()
-        source_file = self._user_input(
-            f"Enter your file name: {Fore.YELLOW}{self.source_files_prefix}{Style.RESET_ALL}"
+        files_list = self._print_source_files()
+
+        source_input = self._user_input(
+            f"Enter your file name or number: {Fore.YELLOW}{self.source_files_prefix}{Style.RESET_ALL}"
         ).strip()
-        if not source_file:
+
+        if not source_input:
             return
 
+        if source_input.isdigit():
+            index = int(source_input) - 1
+
+            if files_list and 0 <= index < len(files_list):
+                source_file = files_list[index]
+
+            else:
+                self.__invalid_input("Invalid file number")
+                return
+        else:
+            source_file = source_input
+
         target_file = self._prompt_target_file(dst)
+
         if target_file is None:
             return
 

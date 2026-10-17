@@ -11,9 +11,32 @@ def format_msg(
     data: Any = "",
     filename: str = "",
 ) -> str:
-    """Formats an json object that represents msg between server and client. Returns str
-    e.g. format_msg(msg_type="chat", action="group", src="127.0.0.1", data=True)  -> json.dumps("msg_type": "chat", "action": "group", "src": "127.0.0.1", "data": True)
-    Avaiable msg types = [command, query, chat, response, auth, warning]
+    """Formats a JSON object that represents a message between a server and a client.
+
+    Args:
+        msg_type: The category of the message. Must be one of the allowed types.
+        action: The specific operation or subtype being performed (e.g., "group",
+          "get_usernames").
+        dst: The destination identifier (Client username or Ip Address)
+        src: The source identifier (Client username or Ip Address)
+        reason: An optional explanation, typically used for errors, warnings, or
+          auth failures.
+        data: The payload or core content of the message (can be of any type,
+          such as a dict, bool, or str).
+        filename: An optional file name if the message relates to file transfer
+          or storage.
+
+    Returns:
+        str: A **JSON string** (a string formatted according to JavaScript Object
+        Notation, used here for serializing data structures so they can be sent
+        across a network).
+
+    Raises:
+        ValueError: If `msg_type` is not in the list of allowed message types.
+
+    Example:
+        >>> format_msg(msg_type="chat", action="group", src="127.0.0.1", data=True)
+        '{"msg_type": "chat", "action": "group", "data": true, "dst": "", "src": "d1", "reason": "", "filename": ""}'
     """
     aviable_msg_types = [
         "command",
