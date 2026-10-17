@@ -52,6 +52,7 @@ class Tui:
         self.recived_files_history = []
         self.not_read_new_file = False
         self.__client.on_recived_file = self._update_file_history
+        self.in_menu = False
 
         Path(self.source_files_prefix).mkdir(parents=True, exist_ok=True)
 
@@ -89,7 +90,9 @@ class Tui:
             print(f"{Fore.YELLOW}No files received yet.{Style.RESET_ALL}")
         else:
             for i, file_item in enumerate(self.recived_files_history, start=1):
-                print(f"{Fore.CYAN}{i}.{Style.RESET_ALL} {file_item}")
+                print(
+                    f"{Fore.CYAN}{i}.{Style.RESET_ALL} From:{file_item[0]} File:{file_item[1]}"
+                )
 
     def file_history(self) -> None:
         """Displays received files history with color coding and management options."""
@@ -101,7 +104,7 @@ class Tui:
         print(f"\n{Fore.YELLOW}/clear{Style.RESET_ALL} to clear history")
         print(f"{Fore.CYAN}q.{Style.RESET_ALL} back")
 
-        user_input = self._user_input(">").strip().lower()
+        user_input = self._user_input("\n>").strip().lower()
 
         if self._check_if_exit(user_input):
             return
@@ -190,8 +193,20 @@ class Tui:
         return user_msg
 
     def _update_file_history(self, msg):
+        """Updates the received files history with a new file entry and marks it as unread.
+
+        If the user is currently viewing the main menu, it refreshes the display
+        to show the new file notification badge.
+
+        Args:
+            msg (dict): msg from classes.protcol
+        """
         self.recived_files_history.append([msg["src"], msg["filename"]])
         self.not_read_new_file = True
+
+        if self.in_menu:
+            clear()
+            self._print_menu()
 
     def login(self):
         """Asks user for login name and sends to server. if successfull then sets it as sef.__username"""
@@ -490,8 +505,13 @@ class Tui:
                 case "1":
                     self.send_into_file()
 
-    def start(self):
+        def start(self) -> None:
+            """Starts the main TUI event loop, handling menu navigation and user choices
+            until the client disconnects or exits.
+            """
+
         while not self.__client.disconnected.is_set():
+            self.in_menu = True
             clear()
 
             self._print_menu()
@@ -511,24 +531,31 @@ class Tui:
 
                 case "2":
                     if logged:
+                        self.in_menu = False
                         self.group_chat()
                     else:
                         self.__invalid_input()
 
                 case "3":
                     if logged:
+                        self.in_menu = False
                         self.whisper()
                     else:
                         self.__invalid_input()
 
                 case "4":
                     if logged:
+                        self.in_menu = False
                         self.remote_command()
                     else:
                         self.__invalid_input()
 
                 case "5":
-                    self.file_history()
+                    if logged:
+                        self.in_menu = False
+                        self.file_history()
+                    else:
+                        self.__invalid_input()
 
                 case "q":
                     self.__client.cleanup()
