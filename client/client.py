@@ -7,8 +7,9 @@ import threading
 from pathlib import Path
 from time import sleep
 
-from classes.exceptions import InvalidMsgAction, InvalidMsgType
+from classes.exceptions import InvalidMsgAction, InvalidMsgType, ServerDisconnection
 from classes.protocol import format_msg
+from server.server import Server
 
 
 class Client:
@@ -272,7 +273,7 @@ class Client:
         with open(full_file_name, "w") as f:
             f.write(msg["data"])
 
-        most_recent_file_by_user = f"recent_file/{msg['src']}"
+        most_recent_file_by_user = f"recent_files/{msg['src']}"
 
         with open(most_recent_file_by_user, "w") as f:
             f.write(msg["data"])
@@ -321,14 +322,19 @@ class Client:
             while not self.disconnected.is_set():
                 raw_data = reader.readline()
 
+                print("mewow" + raw_data)
                 if not raw_data:
-                    raise ConnectionResetError
+                    raise ServerDisconnection
 
                 formated_msg = json.loads(raw_data)
                 self.msg_handler(formated_msg)
 
-        except OSError, ConnectionResetError, BrokenPipeError:
-            print("Connection Error from host side!", file=sys.stderr)
+        except ServerDisconnection:
+            print("Connection lost from host side!", file=sys.stderr)
+
+        except (OSError, ConnectionResetError, BrokenPipeError) as e:
+            print(e)
+            print("Critical Connection Error.", file=sys.stderr)
 
         except json.JSONDecodeError, TypeError:
             print("Invalid msg. Could not format msg to JSON.", file=sys.stderr)
