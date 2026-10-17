@@ -306,7 +306,9 @@ class Tui:
                         dst, data=data, target_filename=target_file
                     )
 
-                    input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
+                    self._user_input(
+                        f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}"
+                    )
 
                 case "3":
                     break

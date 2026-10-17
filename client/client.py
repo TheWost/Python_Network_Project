@@ -9,7 +9,7 @@ from time import sleep
 
 from classes.exceptions import InvalidMsgAction, InvalidMsgType, ServerDisconnection
 from classes.protocol import format_msg
-from server.server import Server
+from utils import grab_extension
 
 
 class Client:
@@ -273,7 +273,10 @@ class Client:
         with open(full_file_name, "w") as f:
             f.write(msg["data"])
 
-        most_recent_file_by_user = f"recent_files/{msg['src']}"
+        sender_username = msg["src"]
+        extension = grab_extension(msg["filename"])
+
+        most_recent_file_by_user = f"recent_files/{sender_username}.{extension}"
 
         with open(most_recent_file_by_user, "w") as f:
             f.write(msg["data"])
