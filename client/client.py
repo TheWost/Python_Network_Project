@@ -51,6 +51,7 @@ class Client:
         self.chat_history = []
 
         self.on_message = None
+        self.on_recived_file = None
 
         self.action_map = {
             "response": {
@@ -300,6 +301,9 @@ class Client:
 
         with open(most_recent_file_by_user, "w") as f:
             f.write(msg["data"])
+
+        if callable(self.on_recived_file):
+            self.on_recived_file(msg)
 
     def _handle_response(self, msg: dict) -> None:
         """Handles a server response by storing it and unblocking waiters.
