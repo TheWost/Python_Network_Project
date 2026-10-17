@@ -505,11 +505,10 @@ class Tui:
                 case "1":
                     self.send_into_file()
 
-        def start(self) -> None:
-            """Starts the main TUI event loop, handling menu navigation and user choices
-            until the client disconnects or exits.
-            """
-
+    def start(self) -> None:
+        """Starts the main TUI event loop, handling menu navigation and user choices
+        until the client disconnects or exits.
+        """
         while not self.__client.disconnected.is_set():
             self.in_menu = True
             clear()
