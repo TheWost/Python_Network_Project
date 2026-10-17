@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from colorama import Fore, Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import ANSI
@@ -37,9 +39,13 @@ class Tui:
         self.prompt_session = PromptSession(erase_when_done=True)
 
         self.source_files_prefix = "source_files/"
-        self.target_files_prefix = "target_files/"
+        self.inbox_prefix = "inbox/"
 
-        self.BACK_INPUTS = {"q", "b", "back", "\x1b"}
+        self.__client.download_dir = self.inbox_prefix
+
+        Path(self.inbox_prefix).mkdir(parents=True, exist_ok=True)
+
+        self.BACK_INPUTS = {"exit", "/exit", "/q", "q", "b", "back", "\x1b"}
 
         self.login()
 
@@ -57,7 +63,7 @@ class Tui:
         print(f"{Fore.CYAN}2.{Style.RESET_ALL} Group Chat")
         print(f"{Fore.CYAN}3.{Style.RESET_ALL} Whisper")
         print(f"{Fore.CYAN}4.{Style.RESET_ALL} Remote command")
-        print(f"{Fore.CYAN}5.{Style.RESET_ALL} Exit")
+        print(f"{Fore.CYAN}q.{Style.RESET_ALL} Exit")
 
     def __invalid_input(self, prompt: str = "Invalid answer") -> None:
         """Displays an error msg and waits for user input
@@ -68,20 +74,20 @@ class Tui:
         input(f"{Fore.RED}{Style.BRIGHT}{prompt}{Style.RESET_ALL}")
 
     def _check_if_exit(self, user_msg: str) -> bool:
-        """Checks if input is equal to /exit
+        """Checks if input is equal to /q
 
         args:
             user_msg (str): input to compare
 
         returns:
-            True if input is /exit else False
+            True if input is /q else False
         """
         return user_msg.lower() in self.BACK_INPUTS
 
     def __int_input(
         self, length: int, offset: int = 0, prompt: str = "> "
     ) -> int | None:
-        """Askes user for int input in range of 1-lenght. Returns None if user types /exit
+        """Askes user for int input in range of 1-lenght. Returns None if user types /q
 
         Args:
             lenght (int): Range that it will be compered to.
@@ -101,7 +107,7 @@ class Tui:
                 user_choice = int(user_choice)
 
                 if 1 <= user_choice <= length:
-                    user_choice -= offset
+                    user_choice += offset
                     return user_choice
 
                 self.__invalid_input()
@@ -163,28 +169,37 @@ class Tui:
         """
         return self.__username
 
-    def _choose_client(self, clients_names) -> str | None:
-        """Prints out client names and asks user to choose client index.
+    def _choose_client(self, clients_names: list[str]) -> str | None:
+        """Print the client list and ask the user to pick one by number.
 
         Args:
-            clients_names (list[str]): List containing clients names
+            clients_names: Client names to choose from.
 
         Returns:
-            User chosen client if user chooses one else None
+            The chosen client name, or None if the user backs out or the list
+            is empty.
         """
-        self.__print_out_list(*clients_names)
+        if not clients_names:
+            print(f"{Fore.YELLOW}No clients are connected.{Style.RESET_ALL}")
+            input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
+            return None
+
+        print(f"{Style.BRIGHT}Connected clients{Style.RESET_ALL}\n")
+        for number, name in enumerate(clients_names, start=1):
+            print(f"  {Fore.CYAN}{number}.{Style.RESET_ALL} {name}")
+        print()
 
         prompt_msg = (
             f"{Fore.YELLOW}{self.__username}{Style.RESET_ALL} "
-            f"([{Fore.CYAN}1-{len(clients_names)}{Style.RESET_ALL}]) "
-            f"(/exit to leave) >"
+            f"[{Fore.CYAN}1-{len(clients_names)}{Style.RESET_ALL}] > "
         )
 
-        user_choice = self.__int_input(len(clients_names), prompt=prompt_msg, offset=1)
+        choice = self.__int_input(len(clients_names), prompt=prompt_msg, offset=-1)
 
-        if user_choice is not None:
-            return clients_names[user_choice]
-        return None
+        if choice is None:
+            return None
+
+        return clients_names[choice]
 
     def _print_whisper(self, msg: dict):
         """Prints msg and it's source with [PRIAVTE] at start with magenta color
@@ -228,7 +243,7 @@ class Tui:
 
         try:
             while True:
-                user_msg = self._user_input("(/exit to leave) > ")
+                user_msg = self._user_input("(/q to leave) > ")
 
                 if self._check_if_exit(user_msg):
                     return
@@ -255,10 +270,34 @@ class Tui:
 
         self.__client.send_whisper(user_msg, client)
 
+    def _print_source_files(self) -> None:
+        """List files available under ``self.source_files_prefix``.
+
+        Prints a numbered listing so the user can see what the prefix contains
+        before typing a name. Prints a short notice instead if the prefix is
+        missing or contains no files.
+        """
+        folder = Path(self.source_files_prefix)
+
+        if not folder.is_dir():
+            print(f"{Fore.YELLOW}({folder} does not exist){Style.RESET_ALL}\n")
+            return
+
+        files = sorted(entry.name for entry in folder.iterdir() if entry.is_file())
+
+        if not files:
+            print(f"{Fore.YELLOW}(no files in {folder}){Style.RESET_ALL}\n")
+            return
+
+        print(f"{Style.BRIGHT}Available files in {folder}{Style.RESET_ALL}")
+        for number, name in enumerate(files, start=1):
+            print(f"  {Fore.CYAN}{number}.{Style.RESET_ALL} {name}")
+        print()
+
     def _menu_remote(self, title: str, options: list[str]) -> str | None:
         """Render a remote menu and return the chosen option number as a string.
 
-        Uses ``__int_input`` for validation, so ``/exit`` and any entry in
+        Uses ``__int_input`` for validation, so ``/q`` and any entry in
         ``BACK_INPUTS`` return None instead of a number.
 
         Args:
@@ -289,7 +328,7 @@ class Tui:
         """Prompt for target file name. Returns None if user cancels."""
         value = self._user_input(
             f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL} "
-            f"(blank to cancel): {Fore.YELLOW}{self.target_files_prefix}{Style.RESET_ALL}"
+            f"(blank to cancel): {Fore.YELLOW}{self.inbox_prefix}{Style.RESET_ALL}"
         ).strip()
         return value or None
 
@@ -297,9 +336,11 @@ class Tui:
         """Handle the 'File -> File' action."""
         clear()
         dst = self._choose_client(self.__client.get_usernames())
+        clear()
         if dst is None:
             return
 
+        self._print_source_files()
         source_file = self._user_input(
             f"Enter your file name: {Fore.YELLOW}{self.source_files_prefix}{Style.RESET_ALL}"
         ).strip()
@@ -322,6 +363,7 @@ class Tui:
         """Handle the 'Msg -> File' action."""
         clear()
         dst = self._choose_client(self.__client.get_usernames())
+        clear()
         if dst is None:
             return
 
@@ -358,11 +400,11 @@ class Tui:
         while True:
             choice = self._menu_remote(
                 "Remote Commands",
-                ["Send file/msg into someone's file", "Exit"],
+                ["Send file/msg into someone's file"],
             )
 
             match choice:
-                case None | "2":
+                case None:
                     break
                 case "1":
                     self.send_into_file()
@@ -404,7 +446,7 @@ class Tui:
                     else:
                         self.__invalid_input()
 
-                case "5":
+                case "q":
                     self.__client.cleanup()
                     break
 

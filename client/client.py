@@ -1,6 +1,7 @@
 """Client.py is used to connect with server.py and send msgs."""
 
 import json
+from os.path import exists
 import socket
 import sys
 import threading
@@ -42,7 +43,7 @@ class Client:
         self.PORT = port
         self.thread: threading.Thread | None = None
 
-        self.download_dir = "sent_files"
+        self.download_dir = "inbox"
 
         self.disconnected = threading.Event()
 
@@ -268,6 +269,8 @@ class Client:
             self.on_message(msg)
 
     def _handle_send_into_file(self, msg: dict) -> None:
+
+        Path(self.download_dir).mkdir(parents=True, exist_ok=True)
         full_file_name = f"{self.download_dir}/{msg['filename']}"
 
         with open(full_file_name, "w") as f:
