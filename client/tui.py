@@ -1,5 +1,6 @@
 from colorama import Fore, Style
 from prompt_toolkit import PromptSession
+from prompt_toolkit.formatted_text import ANSI
 
 from client.client import Client
 from utils import clear
@@ -38,6 +39,8 @@ class Tui:
         self.source_files_prefix = "source_files/"
         self.target_files_prefix = "target_files/"
 
+        self.BACK_INPUTS = {"q", "b", "back", "\x1b"}
+
         self.login()
 
     def _print_menu(self) -> None:
@@ -73,7 +76,7 @@ class Tui:
         returns:
             True if input is /exit else False
         """
-        return user_msg.lower() == "/exit"
+        return user_msg.lower() in self.BACK_INPUTS
 
     def __int_input(
         self, length: int, offset: int = 0, prompt: str = "> "
@@ -86,7 +89,7 @@ class Tui:
             propmt (str): Prompt that will be displayed while asking for input.
 
         returns:
-            None if user types /exit else user_choosen number
+            None if user types in ``self.BACK_INPUTS`` else user_choosen number
         """
         while True:
             try:
@@ -125,7 +128,7 @@ class Tui:
         Returns:
             user input
         """
-        user_msg = self.prompt_session.prompt(prompt)
+        user_msg = self.prompt_session.prompt(ANSI(prompt))
         return user_msg
 
     def login(self):
@@ -164,19 +167,24 @@ class Tui:
         """Prints out client names and asks user to choose client index.
 
         Args:
-            client_names (list["str"]): List containing clients names
+            clients_names (list[str]): List containing clients names
 
         Returns:
-            user choosen client if user chooses one else None
+            User chosen client if user chooses one else None
         """
         self.__print_out_list(*clients_names)
 
-        user_choice = self.__int_input(
-            len(clients_names), prompt="(/exit to leave) >", offset=1
+        prompt_msg = (
+            f"{Fore.YELLOW}{self.__username}{Style.RESET_ALL} "
+            f"([{Fore.CYAN}1-{len(clients_names)}{Style.RESET_ALL}]) "
+            f"(/exit to leave) >"
         )
 
-        if user_choice != None:
+        user_choice = self.__int_input(len(clients_names), prompt=prompt_msg, offset=1)
+
+        if user_choice is not None:
             return clients_names[user_choice]
+        return None
 
     def _print_whisper(self, msg: dict):
         """Prints msg and it's source with [PRIAVTE] at start with magenta color
@@ -247,95 +255,117 @@ class Tui:
 
         self.__client.send_whisper(user_msg, client)
 
-    def _remote_commands_print_menu(self) -> None:
-        """Print the top-level remote command menu."""
-        print(f"{Fore.CYAN}1.{Style.RESET_ALL} Send file/msg into someone's file")
-        print(f"{Fore.CYAN}2.{Style.RESET_ALL} Exit")
+    def _menu_remote(self, title: str, options: list[str]) -> str | None:
+        """Render a remote menu and return the chosen option number as a string.
 
-    def _send_into_file_print_menu(self) -> None:
-        """Print the submenu for sending files or messages into a remote file."""
-        print(f"{Fore.CYAN}1.{Style.RESET_ALL} Send your file into file")
-        print(f"{Fore.CYAN}2.{Style.RESET_ALL} Send msg into file")
-        print(f"{Fore.CYAN}3.{Style.RESET_ALL} Back")
+        Uses ``__int_input`` for validation, so ``/exit`` and any entry in
+        ``BACK_INPUTS`` return None instead of a number.
+
+        Args:
+            title: Heading printed above the menu.
+            options: Option labels; numbering starts at 1.
+
+        Returns:
+            The chosen option as a string ("1", "2", ...), or None if the user
+            backed out.
+        """
+        while True:
+            clear()
+            print(f"{Style.BRIGHT}{title}{Style.RESET_ALL}\n")
+
+            for number, label in enumerate(options, start=1):
+                print(f"  {Fore.CYAN}{number}.{Style.RESET_ALL} {label}")
+            print(f"  {Fore.CYAN}q.{Style.RESET_ALL} Back")
+            print()
+
+            choice = self.__int_input(len(options))
+
+            if choice is None:
+                return None
+
+            return str(choice)
+
+    def _prompt_target_file(self, dst: str) -> str | None:
+        """Prompt for target file name. Returns None if user cancels."""
+        value = self._user_input(
+            f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL} "
+            f"(blank to cancel): {Fore.YELLOW}{self.target_files_prefix}{Style.RESET_ALL}"
+        ).strip()
+        return value or None
+
+    def _send_file_into_file(self) -> None:
+        """Handle the 'File -> File' action."""
+        clear()
+        dst = self._choose_client(self.__client.get_usernames())
+        if dst is None:
+            return
+
+        source_file = self._user_input(
+            f"Enter your file name: {Fore.YELLOW}{self.source_files_prefix}{Style.RESET_ALL}"
+        ).strip()
+        if not source_file:
+            return
+
+        target_file = self._prompt_target_file(dst)
+        if target_file is None:
+            return
+
+        self.__client.send_into_file(
+            dst,
+            source_path=self.source_files_prefix + source_file,
+            target_filename=target_file,
+        )
+
+        input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
+
+    def _send_msg_into_file(self) -> None:
+        """Handle the 'Msg -> File' action."""
+        clear()
+        dst = self._choose_client(self.__client.get_usernames())
+        if dst is None:
+            return
+
+        data = self._user_input("Enter your message: ")
+        if not data:
+            return
+
+        target_file = self._prompt_target_file(dst)
+        if target_file is None:
+            return
+
+        self.__client.send_into_file(dst, data=data, target_filename=target_file)
+
+        self._user_input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
 
     def send_into_file(self) -> None:
-        """Handle the submenu for sending a file or a message into a remote client's file.
-
-        Loops until the user chooses to go back. For each action it asks the user
-        to pick a destination client, then collects the required inputs and
-        delegates the actual send to ``self.__client.send_into_file``.
-        """
+        """Handle the submenu for sending a file or a message into a remote client's file."""
         while True:
-            clear()
-            self._send_into_file_print_menu()
+            choice = self._menu_remote(
+                "Send into file",
+                ["File -> File", "Msg -> File"],
+            )
 
-            user_choice = self._user_input("> ")
-
-            match user_choice:
-                case "1":
-                    dst = self._choose_client(self.__client.get_usernames())
-                    if dst is None:
-                        continue
-
-                    source_file = self._user_input(
-                        f"Enter your file name: {Fore.YELLOW}{self.source_files_prefix}{Style.RESET_ALL}"
-                    ).strip()
-                    target_file = self._user_input(
-                        f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: {Fore.YELLOW}{self.target_files_prefix}{Style.RESET_ALL}"
-                    ).strip()
-
-                    source_file = self.source_files_prefix + source_file
-
-                    self.__client.send_into_file(
-                        dst, source_path=source_file, target_filename=target_file
-                    )
-
-                    input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
-
-                case "2":
-                    dst = self._choose_client(self.__client.get_usernames())
-                    if dst is None:
-                        continue
-
-                    data = self._user_input("Enter your message: ")
-                    target_file = self._user_input(
-                        f"Enter target file name on client {Fore.GREEN}{dst}{Style.RESET_ALL}: "
-                    ).strip()
-
-                    self.__client.send_into_file(
-                        dst, data=data, target_filename=target_file
-                    )
-
-                    self._user_input(
-                        f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}"
-                    )
-
-                case "3":
+            match choice:
+                case None:
                     break
-
-                case _:
-                    self.__invalid_input("Invalid choice.")
+                case "1":
+                    self._send_file_into_file()
+                case "2":
+                    self._send_msg_into_file()
 
     def remote_command(self) -> None:
-        """Top-level loop for remote commands.
-
-        Displays the main menu and dispatches to the appropriate handler until
-        the user chooses to exit.
-        """
+        """Top-level loop for remote commands."""
         while True:
-            clear()
-            self._remote_commands_print_menu()
+            choice = self._menu_remote(
+                "Remote Commands",
+                ["Send file/msg into someone's file", "Exit"],
+            )
 
-            user_choice = self._user_input()
-
-            match user_choice:
+            match choice:
+                case None | "2":
+                    break
                 case "1":
                     self.send_into_file()
-                case "2":
-                    break
-                case _:
-                    print(f"{Fore.RED}Invalid choice.{Style.RESET_ALL}")
-                    input(f"{Fore.GREEN}Press Enter to continue...{Style.RESET_ALL}")
 
     def start(self):
         while not self.__client.disconnected.is_set():

@@ -325,7 +325,6 @@ class Client:
             while not self.disconnected.is_set():
                 raw_data = reader.readline()
 
-                print("mewow" + raw_data)
                 if not raw_data:
                     raise ServerDisconnection
 
