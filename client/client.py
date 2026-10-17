@@ -1,7 +1,6 @@
 """Client.py is used to connect with server.py and send msgs."""
 
 import json
-from os.path import exists
 import socket
 import sys
 import threading
@@ -22,6 +21,7 @@ class Client:
         PORT (int): The server port number.
         thread (threading.Thread | None): Background thread listening for incoming server packets.
         download_dir (str): Directory path where received files are saved.
+        recent_files (str): Directory path where received most recent files for user each are saved.
         disconnected (threading.Event): Event flag tracking connection state.
         chat_history (list): Log of received chat messages.
         action_map (dict): Routing table mapping incoming packet types and actions to their handler methods.
@@ -44,6 +44,7 @@ class Client:
         self.thread: threading.Thread | None = None
 
         self.download_dir = "inbox"
+        self.recent_files_dir = "recent_files"
 
         self.disconnected = threading.Event()
 
@@ -279,7 +280,11 @@ class Client:
         sender_username = msg["src"]
         extension = grab_extension(msg["filename"])
 
-        most_recent_file_by_user = f"recent_files/{sender_username}.{extension}"
+        Path(self.recent_files_dir).mkdir(parents=True, exist_ok=True)
+
+        most_recent_file_by_user = (
+            f"{self.recent_files_dir}/{sender_username}.{extension}"
+        )
 
         with open(most_recent_file_by_user, "w") as f:
             f.write(msg["data"])

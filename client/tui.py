@@ -19,7 +19,7 @@ class Tui:
             user input, configured to erase the prompt when done.
         source_files_prefix (str): Directory prefix prepended to source file
             names before they are sent.
-        target_files_prefix (str): Directory prefix prepended to destination
+        inbox_prefix (str): Directory prefix prepended to destination
             file names on the remote client.
         __client (Client): Client instance used for all network operations.
         __username (str | None): Currently logged-in username, or ``None``
@@ -42,8 +42,6 @@ class Tui:
         self.inbox_prefix = "inbox/"
 
         self.__client.download_dir = self.inbox_prefix
-
-        Path(self.inbox_prefix).mkdir(parents=True, exist_ok=True)
 
         self.BACK_INPUTS = {"exit", "/exit", "/q", "q", "b", "back", "\x1b"}
 
