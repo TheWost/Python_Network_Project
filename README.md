@@ -4,7 +4,7 @@ Very very simple, multi device TCP socket application built in Python for real-t
 
 ## Prerequisites
 
-- **Python 3.x** installed
+- **Python >=3.14** installed
 
 ## Configuration
 
