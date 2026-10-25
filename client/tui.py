@@ -94,11 +94,28 @@ class Tui:
                     f"{Fore.CYAN}{i}.{Style.RESET_ALL} From:{file_item[0]} File:{file_item[1]}"
                 )
 
-    def _read_file_in_file_history(self, file_name):
-        with open(self.inbox_prefix + file_name) as file:
+    def _read_file_in_file_history(self, file_name: str) -> None:
+        """Prints a file from inbox line by line and pauses for user input.
+
+        Args:
+            file_name (str): The name of the file to read.
+        """
+        file_path = self.inbox_prefix + file_name
+        with open(file_path, "r") as file:
+            clear()
             for line in file:
                 print(line.strip())
-            input("Go back..")
+            input("\n\n")
+
+    def _open_file_in_file_history(self, file_name: str) -> str:
+        """Reads a file name from inbox and returns it
+
+        Args:
+            file_name (str): The name of the file to read
+        """
+        file_path = self.inbox_prefix + file_name
+        with open(file_path, "r") as file:
+            return file.read()
 
     def file_history(self) -> None:
         """Displays received files history with color coding and management options."""
@@ -114,6 +131,7 @@ class Tui:
             length=len(self.recived_files_history),
             prompt="\n> ",
             include_back_inputs=["/clear"],
+            offset=-1,
         )
 
         if user_input == None:
@@ -129,6 +147,11 @@ class Tui:
             if confirm == "y" or confirm == "yes":
                 self.recived_files_history.clear()
                 print(f"{Fore.GREEN}File history cleared.{Style.RESET_ALL}")
+
+        elif isinstance(user_input, int):
+            filename_index = 1
+            file_name = self.recived_files_history[user_input][filename_index]
+            self._read_file_in_file_history(file_name=file_name)
 
     def __invalid_input(self, prompt: str = "Invalid answer") -> None:
         """Displays an error msg and waits for user input
