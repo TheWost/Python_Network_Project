@@ -176,7 +176,7 @@ class Tui:
         """
         back_inputs = self.BACK_INPUTS.copy()
         if include_back_inputs:
-            back_inputs.add(*include_back_inputs)
+            back_inputs.update(include_back_inputs)
 
         return user_msg.lower() in back_inputs
 
