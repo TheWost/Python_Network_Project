@@ -104,7 +104,7 @@ class Tui:
         with open(file_path, "r") as file:
             clear()
             for line in file:
-                print(line.strip())
+                print(line)
             input("\n\n")
 
     def _open_file_in_file_history(self, file_name: str) -> str:
