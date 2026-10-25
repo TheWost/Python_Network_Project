@@ -132,12 +132,10 @@ class Tui:
             prompt="\n> ",
             include_back_inputs=["/clear"],
             offset=-1,
+            return_back_input=True,
         )
 
-        if user_input == None:
-            return
-
-        elif isinstance(user_input, str) and user_input.lower() == "/clear":
+        if isinstance(user_input, str) and user_input.lower() == "/clear":
             confirm = (
                 self._user_input(f"{Fore.RED}Are you sure? (y/n): {Style.RESET_ALL}")
                 .strip()
@@ -147,6 +145,9 @@ class Tui:
             if confirm == "y" or confirm == "yes":
                 self.recived_files_history.clear()
                 print(f"{Fore.GREEN}File history cleared.{Style.RESET_ALL}")
+
+        elif isinstance(user_input, str) and self._check_if_exit(user_input):
+            return
 
         elif isinstance(user_input, int):
             filename_index = 1
@@ -185,7 +186,8 @@ class Tui:
         offset: int = 0,
         prompt: str = "> ",
         include_back_inputs: list[str] | None = None,
-    ) -> int | None:
+        return_back_input: bool = False,
+    ) -> int | None | str:
         """Askes user for int input in range of 1-lenght. Returns None if user types /q
 
         Args:
@@ -193,9 +195,10 @@ class Tui:
             offset (int): Number that will move backwards result by that amount
             propmt (str): Prompt that will be displayed while asking for input.
             include_back_inputs (list[str]): List of allowed back inputs. See meth:`_check_if_exit` for more info
+            return_back_input (bool): Returns back_input typed by user if True, else returns just None
 
         returns:
-            None if user types in ``self.BACK_INPUTS`` else user_choosen number
+            None|str if user types in ``self.BACK_INPUTS`` else user_choosen number
         """
         while True:
             try:
@@ -204,7 +207,7 @@ class Tui:
                 if self._check_if_exit(
                     user_choice, include_back_inputs=include_back_inputs
                 ):
-                    return
+                    return user_choice if return_back_input else None
 
                 user_choice = int(user_choice)
 
