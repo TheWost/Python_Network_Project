@@ -94,6 +94,12 @@ class Tui:
                     f"{Fore.CYAN}{i}.{Style.RESET_ALL} From:{file_item[0]} File:{file_item[1]}"
                 )
 
+    def _read_file_in_file_history(self, file_name):
+        with open(self.inbox_prefix + file_name) as file:
+            for line in file:
+                print(line.strip())
+            input("Go back..")
+
     def file_history(self) -> None:
         """Displays received files history with color coding and management options."""
         clear()
@@ -104,12 +110,16 @@ class Tui:
         print(f"\n{Fore.YELLOW}/clear{Style.RESET_ALL} to clear history")
         print(f"{Fore.CYAN}q.{Style.RESET_ALL} back")
 
-        user_input = self._user_input("\n> ").strip().lower()
+        user_input = self.__int_input(
+            length=len(self.recived_files_history),
+            prompt="\n> ",
+            include_back_inputs=["/clear"],
+        )
 
-        if self._check_if_exit(user_input):
+        if user_input == None:
             return
 
-        elif user_input == "/clear":
+        elif isinstance(user_input, str) and user_input.lower() == "/clear":
             confirm = (
                 self._user_input(f"{Fore.RED}Are you sure? (y/n): {Style.RESET_ALL}")
                 .strip()
@@ -131,7 +141,7 @@ class Tui:
     def _check_if_exit(
         self, user_msg: str, include_back_inputs: list[str] | None = None
     ) -> bool:
-        """Checks if the user input matches any registered back or exit command.
+        """Checks if the user input matches any registered back or exit command. Not case-sensitive
 
         Args:
             user_msg (str): Input string to evaluate.
