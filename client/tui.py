@@ -128,19 +128,30 @@ class Tui:
         """
         input(f"{Fore.RED}{Style.BRIGHT}{prompt}{Style.RESET_ALL}")
 
-    def _check_if_exit(self, user_msg: str) -> bool:
+    def _check_if_exit(
+        self, user_msg: str, include_back_inputs: list[str] | None = None
+    ) -> bool:
         """Checks if the user input matches any registered back or exit command.
 
         Args:
             user_msg (str): Input string to evaluate.
+            include_back_inputs (list[str]): Included inside BACK_INPUTS to exit command
 
         Returns:
             bool: True if the input is in BACK_INPUTS, else False.
         """
-        return user_msg.lower() in self.BACK_INPUTS
+        back_inputs = self.BACK_INPUTS.copy()
+        if include_back_inputs:
+            back_inputs.add(*include_back_inputs)
+
+        return user_msg.lower() in back_inputs
 
     def __int_input(
-        self, length: int, offset: int = 0, prompt: str = "> "
+        self,
+        length: int,
+        offset: int = 0,
+        prompt: str = "> ",
+        include_back_inputs: list[str] | None = None,
     ) -> int | None:
         """Askes user for int input in range of 1-lenght. Returns None if user types /q
 
@@ -148,6 +159,7 @@ class Tui:
             lenght (int): Range that it will be compered to.
             offset (int): Number that will move backwards result by that amount
             propmt (str): Prompt that will be displayed while asking for input.
+            include_back_inputs (list[str]): List of allowed back inputs. See meth:`_check_if_exit` for more info
 
         returns:
             None if user types in ``self.BACK_INPUTS`` else user_choosen number
@@ -156,7 +168,9 @@ class Tui:
             try:
                 user_choice = self._user_input(prompt)
 
-                if self._check_if_exit(user_choice):
+                if self._check_if_exit(
+                    user_choice, include_back_inputs=include_back_inputs
+                ):
                     return
 
                 user_choice = int(user_choice)
